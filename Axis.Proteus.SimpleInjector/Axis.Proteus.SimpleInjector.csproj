@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A8FE9A87-F788-48A1-940E-89CB657267C7}</ProjectGuid>
+    <ProjectGuid>{91D95101-3087-48A2-8F20-9010FB5528AC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Axis.Proteus</RootNamespace>
-    <AssemblyName>Axis.Proteus</AssemblyName>
+    <RootNamespace>Axis.Proteus.SimpleInjector</RootNamespace>
+    <AssemblyName>Axis.Proteus.SimpleInjector</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,9 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IServiceConsumer.cs" />
-    <Compile Include="IServiceRegistrar.cs" />
-    <Compile Include="IServiceResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
