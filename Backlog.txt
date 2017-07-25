@@ -1,0 +1,6 @@
+
+2017/07/25 #01 ===============================================================================================================================
+
+1.		Solution initialization.
+2.		Add main Axis.Proteus project
+3.		Add Proteus.Mvc, Proteus.WebApi, Proteus.Akka, Proteus.Signalr
