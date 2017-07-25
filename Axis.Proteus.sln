@@ -5,7 +5,21 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus", "Axis.Proteus\Axis.Proteus.csproj", "{A8FE9A87-F788-48A1-940E-89CB657267C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.SimpleInjector", "Axis.Proteus.SimpleInjector\Axis.Proteus.SimpleInjector.csproj", "{91D95101-3087-48A2-8F20-9010FB5528AC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebApi", "WebApi", "{300E35B9-9B0D-485B-878F-002C18917FCE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Signalr", "Signalr", "{2D421FC1-1666-44A7-8DA4-87E83CF34983}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Akka", "Akka", "{F6959727-ED68-4AE3-916E-C2CEA37B5B09}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mvc", "Mvc", "{D46440FC-5214-421F-9CDE-4BC492A5379A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.WebApi.SimpleInjector", "Axis.Proteus.WebApi.SimpleInjector\Axis.Proteus.WebApi.SimpleInjector.csproj", "{86710E3C-2B9F-4131-8CD9-5A262EAE9221}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.Signalr.SimpleInjector", "Axis.Proteus.Signalr.SimpleInjector\Axis.Proteus.Signalr.SimpleInjector.csproj", "{C9EAAF90-830A-4BA6-B931-9FEF0300716A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.Mvc.SimpleInjector", "Axis.Proteus.Mvc.SimpleInjector\Axis.Proteus.Mvc.SimpleInjector.csproj", "{5EA6190F-2E90-4BB8-9851-13669156E699}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.Akka.SimpleInjector", "Axis.Proteus.Akka.SimpleInjector\Axis.Proteus.Akka.SimpleInjector.csproj", "{33C3F92A-8A07-4ADD-87A0-20013357CF7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,12 +31,30 @@ Global
 		{A8FE9A87-F788-48A1-940E-89CB657267C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8FE9A87-F788-48A1-940E-89CB657267C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8FE9A87-F788-48A1-940E-89CB657267C7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{91D95101-3087-48A2-8F20-9010FB5528AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{91D95101-3087-48A2-8F20-9010FB5528AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{91D95101-3087-48A2-8F20-9010FB5528AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{91D95101-3087-48A2-8F20-9010FB5528AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86710E3C-2B9F-4131-8CD9-5A262EAE9221}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86710E3C-2B9F-4131-8CD9-5A262EAE9221}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86710E3C-2B9F-4131-8CD9-5A262EAE9221}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86710E3C-2B9F-4131-8CD9-5A262EAE9221}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9EAAF90-830A-4BA6-B931-9FEF0300716A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9EAAF90-830A-4BA6-B931-9FEF0300716A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9EAAF90-830A-4BA6-B931-9FEF0300716A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9EAAF90-830A-4BA6-B931-9FEF0300716A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EA6190F-2E90-4BB8-9851-13669156E699}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA6190F-2E90-4BB8-9851-13669156E699}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA6190F-2E90-4BB8-9851-13669156E699}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA6190F-2E90-4BB8-9851-13669156E699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33C3F92A-8A07-4ADD-87A0-20013357CF7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C3F92A-8A07-4ADD-87A0-20013357CF7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33C3F92A-8A07-4ADD-87A0-20013357CF7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33C3F92A-8A07-4ADD-87A0-20013357CF7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{86710E3C-2B9F-4131-8CD9-5A262EAE9221} = {300E35B9-9B0D-485B-878F-002C18917FCE}
+		{C9EAAF90-830A-4BA6-B931-9FEF0300716A} = {2D421FC1-1666-44A7-8DA4-87E83CF34983}
+		{5EA6190F-2E90-4BB8-9851-13669156E699} = {D46440FC-5214-421F-9CDE-4BC492A5379A}
+		{33C3F92A-8A07-4ADD-87A0-20013357CF7D} = {F6959727-ED68-4AE3-916E-C2CEA37B5B09}
 	EndGlobalSection
 EndGlobal
