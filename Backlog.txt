@@ -12,3 +12,6 @@
 
 4.		Adds the ability to register a list of implementations for a service.
 		[Done]
+
+
+5.      Add dependency on Axis.Nix, proxy generation. This will give the ability to add interceptors to the registration procedure.
