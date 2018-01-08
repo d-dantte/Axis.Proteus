@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Axis.Proteus</id>
-    <version>1.0.0-pre-20180107-36380625</version>
+    <version>1.0.0</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

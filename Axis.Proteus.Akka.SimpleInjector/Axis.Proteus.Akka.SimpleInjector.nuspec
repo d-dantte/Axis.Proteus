@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Axis.Proteus.Akka.SimpleInjector</id>
-    <version>1.0.0-pre-20180107-36385021</version>
+    <version>1.0.0-pre-20180108-29836949</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

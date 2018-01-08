@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Axis.Proteus.Mvc.SimpleInjector</id>
-    <version>1.0.0-pre-20180107-36380804</version>
+    <version>1.0.0-pre-20180108-29838263</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
