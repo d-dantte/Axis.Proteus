@@ -4,39 +4,32 @@ using SimpleInjector;
 
 namespace Axis.Proteus.SimpleInjector
 {
-    //public class ContainerResolver : IServiceResolver
-    //{
-    //    private Container container = null;
+    public class ContainerResolver : IServiceResolver
+    {
+        private Container container = null;
 
-    //    public ContainerResolver(Container container)
-    //    {
-    //        this.container = container;
-    //    }
+        public ContainerResolver(Container container)
+        {
+            this.container = container;
+        }
 
-    //    #region IServiceResolver
-    //    public void Dispose()
-    //    {
-    //        container.Dispose();
-    //    }
+        #region IServiceResolver
+        public void Dispose()
+        {
+            container.Dispose();
+        }
 
-    //    public Service Resolve<Service>() => container.GetInstance<Service>();
+        public Service Resolve<Service>()
+        where Service: class => container.GetInstance<Service>();
 
-    //    public object Resolve(Type serviceType)
-    //    {
-    //        throw new NotImplementedException();
-    //    }
+        public object Resolve(Type serviceType) => container.GetInstance(serviceType);
 
-    //    public IEnumerable<Service> ResolveAll<Service>()
-    //    {
-    //        throw new NotImplementedException();
-    //    }
+        public IEnumerable<Service> ResolveAll<Service>()
+        where Service : class => container.GetAllInstances<Service>();
 
-    //    public IEnumerable<object> ResolveAll(Type serviceType)
-    //    {
-    //        throw new NotImplementedException();
-    //    }
-    //    #endregion
-    //}
+        public IEnumerable<object> ResolveAll(Type serviceType) => container.GetAllInstances(serviceType);
+        #endregion
+    }
 }
 
 

@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Axis.Proteus.SimpleInjector</id>
-    <version>1.0.0-pre-20180115-30991982</version>
+    <version>1.0.0-pre-20180115-50872832</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -14,8 +14,8 @@
     <tags>Axis Proteus IoC Container Dependency Injection Registration Consumption SimpleInjector WebApi </tags>
     <dependencies>
       <dependency id="Axis.Luna" version="3.1.0" />
-      <dependency id="Axis.Nix" version="1.0.0" />
-      <dependency id="Axis.Proteus" version="1.0.0" />
+      <dependency id="Axis.Nix" version="1.0.1" />
+      <dependency id="Axis.Proteus" version="1.0.2" />
       <dependency id="Axis.Rhea" version="1.0.0" />
       <dependency id="Castle.Core" version="4.2.1" />
       <dependency id="SimpleInjector" version="4.0.12" />
