@@ -12,11 +12,15 @@ namespace Axis.Proteus.SimpleInjector
 {
     public class ContainerRegistrar: IServiceRegistrar//, IDependencyResolver
     {
-        private global::SimpleInjector.Container container = null;
+        private Container _container = null;
+        private IProxyGenerator _generator = null;
+        private IServiceResolver _resolver = null;
 
         public ContainerRegistrar(global::SimpleInjector.Container container)
         {
-            this.container = container;
+            _container = container;
+            _resolver = new ContainerResolver(container);
+            _generator = new ProxyGenerator();
         }
 
         #region IServiceRegistrar
@@ -45,24 +49,24 @@ namespace Axis.Proteus.SimpleInjector
         public IServiceRegistrar Register(Type serviceType, Func<object> factory, RegistryScope scope = null, InterceptorRegistry registry = null)
         {
             if (registry == null)
-                container.Register(serviceType, factory, ToLifestyle(scope));
+                _container.Register(serviceType, factory, ToLifestyle(scope));
             else
             {
                 if (!serviceType.IsInterface)
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateClassProxy(serviceType, new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        var generator = _generator;
+                        return generator.CreateClassProxy(serviceType, new InterceptorRoot(_resolver, factory, registry));
                     },
                     ToLifestyle(scope));
                 }
                 else
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateInterfaceProxyWithoutTarget(serviceType, new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        var generator = _generator;
+                        return generator.CreateInterfaceProxyWithoutTarget(serviceType, new InterceptorRoot(_resolver, factory, registry));
                     },
                     ToLifestyle(scope));
                 }
@@ -76,7 +80,7 @@ namespace Axis.Proteus.SimpleInjector
             //register the individual types first
             implementationTypes.ForAll(_t => Register(_t, scope, registry));
 
-            container.RegisterCollection(serviceType, implementationTypes);
+            _container.RegisterCollection(serviceType, implementationTypes);
 
             return this;
         }
@@ -86,7 +90,7 @@ namespace Axis.Proteus.SimpleInjector
         where Impl : class
         {
             if (registry == null)
-                container.Register<Impl>(ToLifestyle(scope));
+                _container.Register<Impl>(ToLifestyle(scope));
             else
             {
                 //Not sure i should still enforce this - especially since we are using interceptors in this case
@@ -95,10 +99,10 @@ namespace Axis.Proteus.SimpleInjector
                     throw new Exception("Cannot intercept Concrete Services");
                 else
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateInterfaceProxyWithoutTarget<Impl>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), registry));
+                        var generator = _generator;
+                        return generator.CreateInterfaceProxyWithoutTarget<Impl>(new InterceptorRoot(_resolver, registry));
                     },
                     ToLifestyle(scope));
                 }
@@ -112,30 +116,30 @@ namespace Axis.Proteus.SimpleInjector
         where Impl : class, Service
         {
             if (registry == null)
-                container.Register<Service, Impl>(ToLifestyle(scope));
+                _container.Register<Service, Impl>(ToLifestyle(scope));
             else
             {
                 var serviceType = typeof(Service);
                 if (!serviceType.IsInterface)
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateClassProxy<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), container.GetInstance<Impl>, registry));
+                        var generator = _generator;
+                        return generator.CreateClassProxy<Service>(new InterceptorRoot(_resolver, _container.GetInstance<Impl>, registry));
                     },
                     ToLifestyle(scope));
                 }
                 else
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), container.GetInstance<Impl>, registry));
+                        var generator = _generator;
+                        return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(_resolver, _container.GetInstance<Impl>, registry));
                     },
                     ToLifestyle(scope));
                 }
 
-                container.Register<Impl>(ToLifestyle(scope));
+                _container.Register<Impl>(ToLifestyle(scope));
             }
 
             return this;
@@ -145,25 +149,25 @@ namespace Axis.Proteus.SimpleInjector
         where Service : class
         {
             if (registry == null)
-                container.Register(factory, ToLifestyle(scope));
+                _container.Register(factory, ToLifestyle(scope));
             else
             {
                 var serviceType = typeof(Service);
                 if (!serviceType.IsInterface)
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateClassProxy<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        var generator = _generator;
+                        return generator.CreateClassProxy<Service>(new InterceptorRoot(_resolver, factory, registry));
                     },
                     ToLifestyle(scope));
                 }
                 else
                 {
-                    container.Register(() =>
+                    _container.Register(() =>
                     {
-                        var generator = container.GetInstance<IProxyGenerator>();
-                        return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        var generator = _generator;
+                        return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(_resolver, factory, registry));
                     },
                     ToLifestyle(scope));
                 }
@@ -189,7 +193,7 @@ namespace Axis.Proteus.SimpleInjector
                 //Register the individual concrete types
                 implementationTypes.ForAll(_t => Register(_t, scope, registry));
 
-                container.RegisterCollection<Service>(implementationTypes);
+                _container.RegisterCollection<Service>(implementationTypes);
             }
 
             else
@@ -200,26 +204,26 @@ namespace Axis.Proteus.SimpleInjector
                     .ThrowIf(true, "Non-Concrete implementation found");
 
                 //Register the individual concrete types
-                implementationTypes.ForAll(_t => Register(_t, scope, registry));
+                implementationTypes.ForAll(_t => Register(_t, scope));
 
                 //project a factory that lazily loads the service proxies, then register the enumerable of factories
                 implementationTypes
                     .Select(_t =>
                     {
-                        Func<Service> factory = () => container.GetInstance(_t).Cast<Service>();
+                        Func<Service> factory = () => _container.GetInstance(_t).Cast<Service>();
                         var serviceType = typeof(Service);
                         if (!serviceType.IsInterface)
                         {
-                            var generator = container.GetInstance<IProxyGenerator>();
-                            return generator.CreateClassProxy<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                            var generator = _generator;
+                            return generator.CreateClassProxy<Service>(new InterceptorRoot(_resolver, factory, registry));
                         }
                         else
                         {
-                            var generator = container.GetInstance<IProxyGenerator>();
-                            return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                            var generator = _generator;
+                            return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(_resolver, factory, registry));
                         }
                     })
-                    .Pipe(container.RegisterCollection);
+                    .Pipe(_container.RegisterCollection);
             }
 
             return this;
