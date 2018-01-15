@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>Axis.Proteus.WebApi.SimpleInjector</id>
-    <version>1.0.0-pre-20180108-29838187</version>
+    <version>1.0.0-pre-20180114-78949831</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -12,7 +12,16 @@
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>Axis Proteus IoC Container Dependency Injection Registration Consumption SimpleInjector WebApi </tags>
-    <dependencies />
+    <dependencies>
+      <dependency id="Axis.Luna" version="3.1.0" />
+      <dependency id="Axis.Nix" version="1.0.0" />
+      <dependency id="Axis.Proteus" version="1.0.0" />
+      <dependency id="Axis.Rhea" version="1.0.0" />
+      <dependency id="Castle.Core" version="4.2.1" />
+      <dependency id="Microsoft.Owin" version="4.0.0-preview1" />
+      <dependency id="Owin" version="1.0" />
+      <dependency id="SimpleInjector" version="4.0.12" />
+    </dependencies>
   </metadata>
   <files>
     <file src="bin\Debug\Axis.Proteus.WebApi.SimpleInjector.dll" target="lib\net452" />

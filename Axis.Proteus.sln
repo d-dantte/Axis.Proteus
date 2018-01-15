@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Akka", "Akka", "{F6959727-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mvc", "Mvc", "{D46440FC-5214-421F-9CDE-4BC492A5379A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.WebApi.SimpleInjector", "Axis.Proteus.WebApi.SimpleInjector\Axis.Proteus.WebApi.SimpleInjector.csproj", "{86710E3C-2B9F-4131-8CD9-5A262EAE9221}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.Owin.SimpleInjector", "Axis.Proteus.WebApi.SimpleInjector\Axis.Proteus.Owin.SimpleInjector.csproj", "{86710E3C-2B9F-4131-8CD9-5A262EAE9221}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Proteus.Signalr.SimpleInjector", "Axis.Proteus.Signalr.SimpleInjector\Axis.Proteus.Signalr.SimpleInjector.csproj", "{C9EAAF90-830A-4BA6-B931-9FEF0300716A}"
 EndProject
