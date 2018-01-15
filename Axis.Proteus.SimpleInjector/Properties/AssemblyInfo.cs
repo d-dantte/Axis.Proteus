@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Axis.Proteus.SimpleInjector")]
+[assembly: AssemblyTitle("Axis.Proteus.WebApi.SimpleInjector")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Axis.Proteus.SimpleInjector")]
+[assembly: AssemblyProduct("Axis.Proteus.WebApi.SimpleInjector")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("91d95101-3087-48a2-8f20-9010fb5528ac")]
+[assembly: Guid("86710e3c-2b9f-4131-8cd9-5a262eae9221")]
 
 // Version information for an assembly consists of the following four values:
 //

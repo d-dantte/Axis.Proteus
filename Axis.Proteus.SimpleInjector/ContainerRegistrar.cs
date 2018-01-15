@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using Axis.Luna.Extensions;
 using Axis.Nix;
@@ -7,44 +8,16 @@ using Axis.Rhea;
 using Castle.DynamicProxy;
 using SimpleInjector;
 
-namespace Axis.Proteus.WebApi.SimpleInjector
+namespace Axis.Proteus.SimpleInjector
 {
-    public class Container: IServiceResolver, IServiceRegistrar//, IDependencyResolver
+    public class ContainerRegistrar: IServiceRegistrar//, IDependencyResolver
     {
         private global::SimpleInjector.Container container = null;
 
-        public Container(global::SimpleInjector.Container container)
+        public ContainerRegistrar(global::SimpleInjector.Container container)
         {
             this.container = container;
         }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        #region IServiceResolver
-        public Service Resolve<Service>()
-        {
-            throw new NotImplementedException();
-        }
-
-        public object Resolve(Type serviceType)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<Service> ResolveAll<Service>()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<object> ResolveAll(Type serviceType)
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
-
 
         #region IServiceRegistrar
         public IServiceRegistrar Register(Type serviceType, RegistryScope scope = null, InterceptorRegistry registry = null)
@@ -116,6 +89,7 @@ namespace Axis.Proteus.WebApi.SimpleInjector
                 container.Register<Impl>(ToLifestyle(scope));
             else
             {
+                //Not sure i should still enforce this - especially since we are using interceptors in this case
                 var serviceType = typeof(Impl);
                 if (!serviceType.IsInterface)
                     throw new Exception("Cannot intercept Concrete Services");
@@ -210,23 +184,48 @@ namespace Axis.Proteus.WebApi.SimpleInjector
         public IServiceRegistrar Register<Service>(IEnumerable<Type> implementationTypes, RegistryScope scope = null, InterceptorRegistry registry = null)
         where Service : class
         {
-            ///Modify this implementation to make sure implementationTypes are classes, then register them as concrete types on the container,
-            ///and lastly, call container.RegisterCollection(...), passing a "container uncontrolled" collection whose individual elements are
-            ///a projection of the implementation types that returns a castle proxy of the service interface that has been given a TargetProvider
-            ///that returns the container resolved concrete class of the original implementation type.
+            if (registry == null)
+            {
+                //Register the individual concrete types
+                implementationTypes.ForAll(_t => Register(_t, scope, registry));
 
+                container.RegisterCollection<Service>(implementationTypes);
+            }
 
-            //register the individual types first
-            implementationTypes.ForAll(_t => Register(_t, scope, registry));
+            else
+            {
+                //ensure implementations are CONCRETE types
+                implementationTypes
+                    .Any(_t => !_t.IsClass || _t.IsAbstract)
+                    .ThrowIf(true, "Non-Concrete implementation found");
 
-            container.RegisterCollection<Service>(implementationTypes);
+                //Register the individual concrete types
+                implementationTypes.ForAll(_t => Register(_t, scope, registry));
+
+                //project a factory that lazily loads the service proxies, then register the enumerable of factories
+                implementationTypes
+                    .Select(_t =>
+                    {
+                        Func<Service> factory = () => container.GetInstance(_t).Cast<Service>();
+                        var serviceType = typeof(Service);
+                        if (!serviceType.IsInterface)
+                        {
+                            var generator = container.GetInstance<IProxyGenerator>();
+                            return generator.CreateClassProxy<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        }
+                        else
+                        {
+                            var generator = container.GetInstance<IProxyGenerator>();
+                            return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(container.GetInstance<IServiceResolver>(), factory, registry));
+                        }
+                    })
+                    .Pipe(container.RegisterCollection);
+            }
 
             return this;
         }
         #endregion
         
-
-
         private Lifestyle ToLifestyle(RegistryScope scope)
         {
             if (scope == null || scope.Name == RegistryScope.Transient.Name)

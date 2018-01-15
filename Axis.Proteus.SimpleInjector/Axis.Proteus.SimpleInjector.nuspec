@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package>
   <metadata>
-    <id>Axis.Proteus.WebApi.SimpleInjector</id>
-    <version>1.0.0-pre-20180114-78949831</version>
+    <id>Axis.Proteus.SimpleInjector</id>
+    <version>1.0.0-pre-20180115-30991982</version>
     <authors>Dantte</authors>
     <owners>Axiis</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -18,12 +18,10 @@
       <dependency id="Axis.Proteus" version="1.0.0" />
       <dependency id="Axis.Rhea" version="1.0.0" />
       <dependency id="Castle.Core" version="4.2.1" />
-      <dependency id="Microsoft.Owin" version="4.0.0-preview1" />
-      <dependency id="Owin" version="1.0" />
       <dependency id="SimpleInjector" version="4.0.12" />
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Debug\Axis.Proteus.WebApi.SimpleInjector.dll" target="lib\net452" />
+    <file src="bin\Debug\Axis.Proteus.SimpleInjector.dll" target="lib\net452" />
   </files>
 </package>
