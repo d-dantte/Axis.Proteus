@@ -28,6 +28,16 @@ namespace Axis.Proteus.SimpleInjector.Test
                     return _op;
                 })
                 .ToArray();
+
+            serviceOps = container
+                .GetAllInstances<ISomeService>()
+                .Select(_s => _s.Operation2())
+                .Select(_op =>
+                {
+                    _op.ResolveSafely();
+                    return _op;
+                })
+                .ToArray();
         }
     }
 

@@ -16,7 +16,7 @@ namespace Axis.Proteus.SimpleInjector
         private IProxyGenerator _generator = null;
         private IServiceResolver _resolver = null;
 
-        public ContainerRegistrar(global::SimpleInjector.Container container)
+        public ContainerRegistrar(Container container)
         {
             _container = container;
             _resolver = new ContainerResolver(container);
