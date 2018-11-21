@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Axis.Proteus
+namespace Axis.Proteus.Interception
 {
     public class InterceptorRegistry
     {
-        private HashSet<Type> _proxyIntereptorTypes = new HashSet<Type>();
+        private readonly HashSet<Type> _proxyInterceptorTypes = new HashSet<Type>();
 
 
         public InterceptorRegistry(params Type[] types)
@@ -16,9 +16,9 @@ namespace Axis.Proteus
 
         public virtual void RegisterInterceptor(Type type)
         {
-            _proxyIntereptorTypes.Add(type);
+            _proxyInterceptorTypes.Add(type);
         }
 
-        public virtual IEnumerable<Type> Interceptors() => _proxyIntereptorTypes.ToArray();
+        public virtual IEnumerable<Type> Interceptors() => _proxyInterceptorTypes.ToArray();
     }
 }

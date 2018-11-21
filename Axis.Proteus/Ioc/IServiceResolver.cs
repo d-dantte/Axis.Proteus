@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Axis.Proteus
+namespace Axis.Proteus.Ioc
 {
     public interface IServiceResolver : IDisposable
     {
