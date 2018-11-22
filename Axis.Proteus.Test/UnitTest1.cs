@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Axis.Proteus.SimpleInjector.Test
+namespace Axis.Proteus.Test
 {
     [TestClass]
     public class UnitTest1

@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using Axis.Luna.Extensions;
-using Axis.Nix;
-using Axis.Rhea;
+using Axis.Proteus.Interception;
+using Axis.Proteus.Ioc;
 using Castle.DynamicProxy;
 using SimpleInjector;
 
 namespace Axis.Proteus.SimpleInjector
 {
-    public class ContainerRegistrar: IServiceRegistrar//, IDependencyResolver
+    public class ContainerRegistrar : IServiceRegistrar//, IDependencyResolver
     {
-        private Container _container = null;
-        private IProxyGenerator _generator = null;
-        private IServiceResolver _resolver = null;
+        private readonly Container _container;
+        private readonly IProxyGenerator _generator;
+        private readonly IServiceResolver _resolver;
 
         public ContainerRegistrar(Container container)
         {
@@ -26,24 +27,22 @@ namespace Axis.Proteus.SimpleInjector
         #region IServiceRegistrar
         public IServiceRegistrar Register(Type serviceType, RegistryScope scope = null, InterceptorRegistry registry = null)
         {
-            Expression<Func<IServiceRegistrar, IServiceRegistrar>> exp = _r => _r.Register<object>(scope, registry);
+            Expression<Func<IServiceRegistrar, IServiceRegistrar>> exp = r => r.Register<object>(scope, registry);
             return exp.Body
-                .Cast<MethodCallExpression>().Method
+                .As<MethodCallExpression>().Method
                 .GetGenericMethodDefinition()
                 .MakeGenericMethod(serviceType)
-                .Pipe(_minfo => this.CallNormalized(_minfo, scope, registry))
-                .Cast<IServiceRegistrar>();
+                .Pipe(methodInfo => this.CallNormalizedFunc<IServiceRegistrar>(methodInfo, scope, registry));
         }
 
         public IServiceRegistrar Register(Type serviceType, Type concreteType, RegistryScope scope = null, InterceptorRegistry registry = null)
         {
-            Expression<Func<IServiceRegistrar, IServiceRegistrar>> exp = _r => _r.Register<object, object>(scope, registry);
+            Expression<Func<IServiceRegistrar, IServiceRegistrar>> exp = r => r.Register<object, object>(scope, registry);
             return exp.Body
-                .Cast<MethodCallExpression>().Method
+                .As<MethodCallExpression>().Method
                 .GetGenericMethodDefinition()
                 .MakeGenericMethod(serviceType)
-                .Pipe(_minfo => this.CallNormalized(_minfo, scope, registry))
-                .Cast<IServiceRegistrar>();
+                .Pipe(methodInfo => this.CallNormalizedFunc<IServiceRegistrar>(methodInfo, scope, registry));
         }
 
         public IServiceRegistrar Register(Type serviceType, Func<object> factory, RegistryScope scope = null, InterceptorRegistry registry = null)
@@ -78,9 +77,10 @@ namespace Axis.Proteus.SimpleInjector
         public IServiceRegistrar Register(Type serviceType, IEnumerable<Type> implementationTypes, RegistryScope scope = null, InterceptorRegistry registry = null)
         {
             //register the individual types first
-            implementationTypes.ForAll(_t => Register(_t, scope, registry));
+            var implementations = implementationTypes.ToArray();
+            implementations.ForAll(t => Register(t, scope, registry));
 
-            _container.RegisterCollection(serviceType, implementationTypes);
+            _container.Collection.Register(serviceType, implementations);
 
             return this;
         }
@@ -91,6 +91,7 @@ namespace Axis.Proteus.SimpleInjector
         {
             if (registry == null)
                 _container.Register<Impl>(ToLifestyle(scope));
+
             else
             {
                 //Not sure i should still enforce this - especially since we are using interceptors in this case
@@ -188,29 +189,30 @@ namespace Axis.Proteus.SimpleInjector
         public IServiceRegistrar Register<Service>(IEnumerable<Type> implementationTypes, RegistryScope scope = null, InterceptorRegistry registry = null)
         where Service : class
         {
+            var implementations = implementationTypes.ToArray();
             if (registry == null)
             {
                 //Register the individual concrete types
-                implementationTypes.ForAll(_t => Register(_t, scope, registry));
+                implementations.ForAll(t => Register(t, scope));
 
-                _container.RegisterCollection<Service>(implementationTypes);
+                _container.Collection.Register<Service>(implementations);
             }
 
             else
             {
                 //ensure implementations are CONCRETE types
-                implementationTypes
-                    .Any(_t => !_t.IsClass || _t.IsAbstract)
+                implementations
+                    .Any(t => !t.IsClass || t.IsAbstract)
                     .ThrowIf(true, "Non-Concrete implementation found");
 
                 //Register the individual concrete types
-                implementationTypes.ForAll(_t => Register(_t, scope));
+                implementations.ForAll(t => Register(t, scope));
 
                 //project a factory that lazily loads the service proxies, then register the enumerable of factories
-                implementationTypes
-                    .Select(_t =>
+                implementations
+                    .Select(t =>
                     {
-                        Func<Service> factory = () => _container.GetInstance(_t).Cast<Service>();
+                        Func<Service> factory = () => _container.GetInstance(t).As<Service>();
                         var serviceType = typeof(Service);
                         if (!serviceType.IsInterface)
                         {
@@ -223,18 +225,19 @@ namespace Axis.Proteus.SimpleInjector
                             return generator.CreateInterfaceProxyWithoutTarget<Service>(new InterceptorRoot(_resolver, factory, registry));
                         }
                     })
-                    .Pipe(_container.RegisterCollection);
+                    .Pipe(_container.Collection.Register);
             }
 
             return this;
         }
         #endregion
-        
-        private Lifestyle ToLifestyle(RegistryScope scope)
+
+        private static Lifestyle ToLifestyle(RegistryScope scope)
         {
             if (scope == null || scope.Name == RegistryScope.Transient.Name)
                 return Lifestyle.Transient;
-            if (scope.Name == RegistryScope.Singleton.Name)
+
+            else if (scope.Name == RegistryScope.Singleton.Name)
                 return Lifestyle.Singleton;
 
             else return Lifestyle.Scoped;
