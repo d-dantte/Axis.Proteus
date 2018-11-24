@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Axis.Luna.Extensions;
 
 namespace Axis.Proteus.Interception
 {
@@ -16,6 +17,9 @@ namespace Axis.Proteus.Interception
 
         public virtual void RegisterInterceptor(Type type)
         {
+            if(!type.Implements(typeof(IProxyInterceptor)))
+                throw new Exception("Invalid Interceptor Type");
+
             _proxyInterceptorTypes.Add(type);
         }
 
