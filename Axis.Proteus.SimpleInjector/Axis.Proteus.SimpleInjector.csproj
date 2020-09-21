@@ -1,17 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.1;net461;</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.1</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.1.0</Version>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <FileVersion>5.0.0.0</FileVersion>
+    <Version>5.0.0</Version>
+    <RootNamespace>Axis.Proteus.SimpleInjector</RootNamespace>
+    <AssemblyName>Axis.Proteus.SimpleInjector</AssemblyName>
     <Description>Simple Injector Implementation of the Axis.Proteus Ioc Registration and Resolution contract interfaces.</Description>
     <PackageTags>IOC dependency injection simpleinjector</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Axis.Luna.Extensions" Version="4.0.6" />
-    <PackageReference Include="Castle.Core" Version="4.3.1" />
-    <PackageReference Include="SimpleInjector" Version="4.4.0" />
+    <PackageReference Include="Axis.Luna.Extensions" Version="5.1.0" />
+    <PackageReference Include="Axis.Luna.FInvoke" Version="5.0.1" />
+    <PackageReference Include="SimpleInjector" Version="4.10.2" />
   </ItemGroup>
 
   <ItemGroup>

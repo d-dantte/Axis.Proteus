@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using Axis.Proteus.Ioc;
+using Axis.Proteus.IoC;
 using SimpleInjector;
 
 namespace Axis.Proteus.SimpleInjector
 {
 
-    public class ContainerResolver : IServiceResolver
+    public class SimpleInjectorResolver : IServiceResolver
     {
         private readonly Container _container;
 
-        public ContainerResolver(Container container)
+        public SimpleInjectorResolver(Container container)
         {
             _container = container;
         }
