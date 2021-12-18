@@ -35,7 +35,7 @@ namespace Axis.Proteus.Interception
 		public InterceptorProfile(
 			IInterceptor first, 
 			params IInterceptor[] rest)
-			: this(new[] { first }.Concat(rest)) // :this(first.Enumerate().Concat(rest))
+			: this(first.Concat(rest)) // :this(first.Enumerate().Concat(rest))
 		{
 		}
 

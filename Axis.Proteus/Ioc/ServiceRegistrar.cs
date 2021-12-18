@@ -185,7 +185,7 @@ namespace Axis.Proteus.IoC
                         {
                             return resolver
                                 .Resolve(concreteType)
-                                .Pipe(instance => _proxyGenerator.CreateClassProxyWithTarget(
+                                .ApplyTo(instance => _proxyGenerator.CreateClassProxyWithTarget(
                                     serviceType,
                                     instance,
                                     interceptorProfile.Value.Interceptors.ToArray()));
@@ -359,7 +359,7 @@ namespace Axis.Proteus.IoC
                         {
                             return resolver
                                 .Resolve<Impl>()
-                                .Pipe(instance => _proxyGenerator.CreateClassProxyWithTarget(
+                                .ApplyTo(instance => _proxyGenerator.CreateClassProxyWithTarget(
                                     instance,
                                     interceptorProfile.Value.Interceptors.ToArray()));
                         });
