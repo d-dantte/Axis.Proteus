@@ -1,0 +1,7 @@
+2021/12/19 =====================================================================
+
+1. Since Axis.Proteus.IoC by default stacks registrations of services or implementations, Simple Injector will only utilize
+   Container.Collections.Register, and Container.Collections.AppendRegistration.
+   ps: 'stacking' registrations means i can register 'IService1' to multiple implementations, and also have the same implementation registered
+   to multiple services. All of which can be achieved by repeatedly calling the 'Register' method with the appropriate parameter.
+2. Following #1 above, resolving types will always use Container.GetAllInstances as the base, and filter out instances from what is returned.

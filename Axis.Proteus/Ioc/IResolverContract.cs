@@ -6,7 +6,7 @@ namespace Axis.Proteus.IoC
     /// <summary>
     /// Interface defining contract for resolving instances from the underlying IoC container
     /// </summary>
-    public interface IServiceResolver : IDisposable
+    public interface IResolverContract : IDisposable
     {
         /// <summary>
         /// Resolve one instance of the specified service

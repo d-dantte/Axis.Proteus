@@ -38,32 +38,17 @@ namespace Axis.Proteus.IoC
         /// <param name="scope">The resolution scope</param>
         IRegistrarContract Register(
             Type serviceType,
-            Func<IServiceResolver, object> factory,
+            Func<IResolverContract, object> factory,
             RegistryScope? scope = null);
+
 
         /// <summary>
-        /// Register a collection of implementations against a service interface/type
+        /// Returns a <see cref="IResolverContract"/> instance that can resolve all of the registered types within the resolver.
         /// </summary>
-        /// <param name="serviceType">The type of the service</param>
-        /// <param name="concreteType">a service implementation type to be added to the collection registration</param>
-        /// <param name="scope">The resolution scope</param>
-        IRegistrarContract AppendCollectionRegistration(
-            Type serviceType,
-            Type concreteType,
-            RegistryScope? scope = null);
-
-        /// <summary>
-        /// Register a collection of implementations against a service interface/type
-        /// </summary>
-        /// <param name="serviceType">The type of the service</param>
-        /// <param name="concreteType">a service implementation type to be added to the collection registration</param>
-        /// <param name="scope">The resolution scope</param>
-        IRegistrarContract AppendCollectionRegistration(
-            Type serviceType,
-            Func<IServiceResolver, object> factory,
-            RegistryScope? scope = null);
+        IResolverContract BuildResolver();
 
 
+        #region Deprecation candidates.
         /// <summary>
         /// Register a concrete type
         /// </summary>
@@ -80,7 +65,7 @@ namespace Axis.Proteus.IoC
         /// <param name="factory">A factory method used to create the service type</param>
         /// <param name="scope">The resolution scope</param>
         IRegistrarContract Register<Service>(
-            Func<IServiceResolver, Service> factory,
+            Func<IResolverContract, Service> factory,
             RegistryScope? scope = null)
             where Service : class;
 
@@ -94,7 +79,10 @@ namespace Axis.Proteus.IoC
             RegistryScope? scope = null)
             where Service : class 
             where Impl : class, Service;
+        #endregion
 
+        #region Deprecated because registrations are always appended
+        /*
         /// <summary>
         /// Register a factory method that should be used in resolving instances of a service interface/type
         /// </summary>
@@ -117,6 +105,30 @@ namespace Axis.Proteus.IoC
             RegistryScope? scope = null)
             where Service : class
             where Impl : class, Service;
+
+        /// <summary>
+        /// Register a collection of implementations against a service interface/type
+        /// </summary>
+        /// <param name="serviceType">The type of the service</param>
+        /// <param name="concreteType">a service implementation type to be added to the collection registration</param>
+        /// <param name="scope">The resolution scope</param>
+        IRegistrarContract AppendCollectionRegistration(
+            Type serviceType,
+            Type concreteType,
+            RegistryScope? scope = null);
+
+        /// <summary>
+        /// Register a collection of implementations against a service interface/type
+        /// </summary>
+        /// <param name="serviceType">The type of the service</param>
+        /// <param name="concreteType">a service implementation type to be added to the collection registration</param>
+        /// <param name="scope">The resolution scope</param>
+        IRegistrarContract AppendCollectionRegistration(
+            Type serviceType,
+            Func<IServiceResolver, object> factory,
+            RegistryScope? scope = null);
+        */
+        #endregion
     }
 
 }

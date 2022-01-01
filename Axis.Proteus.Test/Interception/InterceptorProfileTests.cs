@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Axis.Proteus.Interception;
 using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Axis.Proteus.Test
+namespace Axis.Proteus.Test.Interception
 {
     [TestClass]
     public class InterceptorProfileTests
@@ -53,6 +54,29 @@ namespace Axis.Proteus.Test
 
             Assert.IsTrue(profile1.Equals(profile2));
             Assert.AreEqual(profile1.GetHashCode(), profile2.GetHashCode());
+        }
+
+        [TestMethod]
+        public void Constructor_WithNullInterceptorList_ShouldThrowException()
+        {
+            Assert.ThrowsException<ArgumentNullException>(() => new InterceptorProfile((IEnumerable<IInterceptor>)null));
+            Assert.ThrowsException<ArgumentNullException>(() => new InterceptorProfile((IInterceptor[])null));
+            Assert.ThrowsException<ArgumentNullException>(() => new InterceptorProfile(null)); //equivalent to the above call
+        }
+
+        [TestMethod]
+        public void Constructor_WithEmptyInterceptorList_ShouldThrowException()
+        {
+            Assert.ThrowsException<ArgumentException>(() => new InterceptorProfile(Array.Empty<IInterceptor>()));
+            Assert.ThrowsException<ArgumentException>(() => new InterceptorProfile(new List<IInterceptor>()));
+        }
+
+        [TestMethod]
+        public void Constructor_WithNullContainingInterceptorList_ShouldThrowException()
+        {
+            Assert.ThrowsException<ArgumentException>(() => new InterceptorProfile((IInterceptor)null));
+            Assert.ThrowsException<ArgumentException>(() => new InterceptorProfile(null, new SampleInterceptor()));
+            Assert.ThrowsException<ArgumentException>(() => new InterceptorProfile(new List<IInterceptor> { null }));
         }
     }
 

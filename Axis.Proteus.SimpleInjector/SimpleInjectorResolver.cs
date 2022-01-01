@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Axis.Proteus.IoC;
 using SimpleInjector;
 
 namespace Axis.Proteus.SimpleInjector
 {
 
-    public class SimpleInjectorResolver : IServiceResolver
+    public class SimpleInjectorResolver : IResolverContract
     {
         private readonly Container _container;
 
-        public SimpleInjectorResolver(Container container)
+        internal SimpleInjectorResolver(Container container)
         {
             _container = container;
         }
@@ -22,9 +23,9 @@ namespace Axis.Proteus.SimpleInjector
         }
 
         public Service Resolve<Service>()
-            where Service : class => _container.GetInstance<Service>();
+            where Service : class => _container.GetAllInstances<Service>().FirstOrDefault();
 
-        public object Resolve(Type serviceType) => _container.GetInstance(serviceType);
+        public object Resolve(Type serviceType) => _container.GetAllInstances(serviceType).FirstOrDefault();
 
         public IEnumerable<Service> ResolveAll<Service>()
             where Service : class => _container.GetAllInstances<Service>();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Axis.Luna.Extensions;
+using System;
 
 namespace Axis.Proteus.IoC
 {
@@ -7,16 +8,27 @@ namespace Axis.Proteus.IoC
     /// </summary>
     public struct RegistryScope
     {
+        /// <summary>
+        /// Singleton scope
+        /// </summary>
         public static readonly RegistryScope Singleton = new RegistryScope("Singleton");
 
+        /// <summary>
+        /// Transient scope
+        /// </summary>
         public static readonly RegistryScope Transient = new RegistryScope("Transient");
 
+        /// <summary>
+        /// Named-scope.
+        /// </summary>
         public static readonly RegistryScope DefaultScope = new RegistryScope("DefaultScope");
+
+        private readonly string _name;
 
         /// <summary>
         /// The name of the scope
         /// </summary>
-        public string Name { get; }
+        public string Name => _name ?? Transient.Name;
 
 
         /// <summary>
@@ -25,7 +37,9 @@ namespace Axis.Proteus.IoC
         /// <param name="name">the name of the scope</param>
         public RegistryScope(string name)
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
+            _name = name.ThrowIf(
+                string.IsNullOrWhiteSpace,
+                new ArgumentNullException(nameof(name)));
         }
 
         /// <inheritdoc/>

@@ -27,19 +27,24 @@ namespace Axis.Proteus.Interception
 			_interceptors = interceptors
 				.ThrowIfNull(new ArgumentNullException(nameof(interceptors)))
 				.ThrowIf(ContainsNull, new ArgumentException("Null Interceptor found"))
-				.ToArray();
+				.ToArray()
+				.ThrowIf(Empty, new ArgumentException("Interceptor list cannot be empty"));
 
 			_hashCode = ValueHash(_interceptors);
 		}
 
+		/// <summary>
+		/// Note that if no argument is passed, this constructor is skipped in favor of the default struct constructor.
+		/// </summary>
 		public InterceptorProfile(
-			IInterceptor first, 
 			params IInterceptor[] rest)
-			: this(first.Concat(rest)) // :this(first.Enumerate().Concat(rest))
+			: this((IEnumerable<IInterceptor>)rest)
 		{
 		}
 
 		private static bool ContainsNull(IEnumerable<IInterceptor> interceptors) => interceptors.Any(i => i == null);
+
+		private static bool Empty(IInterceptor[] interceptors) => interceptors.Length <= 0;
 
 		public override int GetHashCode() => _hashCode;
 
@@ -47,7 +52,9 @@ namespace Axis.Proteus.Interception
 		{
 			return obj is InterceptorProfile other
 				&& _hashCode == other._hashCode
-				&& _interceptors.SequenceEqual(other.Interceptors);
+				&& _interceptors.NullOrTrue(
+					other.Interceptors,
+					(x, y) => x.SequenceEqual(y));
 		}
 	}
 }

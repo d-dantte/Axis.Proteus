@@ -2,7 +2,7 @@ using Axis.Proteus.IoC;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace Axis.Proteus.Test
+namespace Axis.Proteus.Test.IoC
 {
     [TestClass]
     public class RegistryScopeTests
