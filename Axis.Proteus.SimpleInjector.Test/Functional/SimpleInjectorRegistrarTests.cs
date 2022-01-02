@@ -26,8 +26,108 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
 
             // assert
             container.Verify();
-            var registrations = container.ExtractRegistrations();
+            var registrations = container.ExtractRootRegistrations();
             Assert.IsTrue(registrations.ContainsRegistration(typeof(C_I1)));
+        }
+        #endregion
+
+        #region Register(Type, Type, RegistryScope?);
+
+        [TestMethod]
+        public void Register_2_WithValidArgs_RegistersService()
+        {
+            // setup
+            var container = new Container();
+            var registrar = new SimpleInjectorRegistrar(container);
+
+            // test
+            _ = registrar.Register(typeof(I1), typeof(C_I1), RegistryScope.Transient);
+
+            // assert
+            container.Verify();
+            var registrations = container.ExtractRootRegistrations();
+            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1), typeof(C_I1)));
+        }
+        #endregion
+
+        #region Register(Type, Func<IResolverContract, object>, RegistryScope?);
+
+        [TestMethod]
+        public void Register_3_WithValidArgs_RegistersService()
+        {
+            // setup
+            var container = new Container();
+            var registrar = new SimpleInjectorRegistrar(container);
+
+            // test
+            _ = registrar.Register(
+                serviceType: typeof(I1),
+                scope: RegistryScope.Transient,
+                factory: resolver => new C_I1());
+
+            // assert
+            container.Verify();
+            var registrations = container.ExtractRootRegistrations();
+            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1)));
+        }
+        #endregion
+
+        #region Register<Impl>(RegistryScope?);
+
+        [TestMethod]
+        public void Register_4_WithValidArgs_RegistersService()
+        {
+            // setup
+            var container = new Container();
+            var registrar = new SimpleInjectorRegistrar(container);
+
+            // test
+            _ = registrar.Register<C_I1>(RegistryScope.Transient);
+
+            // assert
+            container.Verify();
+            var registrations = container.ExtractRootRegistrations();
+            Assert.IsTrue(registrations.ContainsRegistration(typeof(C_I1)));
+        }
+        #endregion
+
+        #region Register<Service, Impl>(RegistryScope?);
+
+        [TestMethod]
+        public void Register_5_WithValidArgs_RegistersService()
+        {
+            // setup
+            var container = new Container();
+            var registrar = new SimpleInjectorRegistrar(container);
+
+            // test
+            _ = registrar.Register<I1, C_I1>(RegistryScope.Transient);
+
+            // assert
+            container.Verify();
+            var registrations = container.ExtractRootRegistrations();
+            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1), typeof(C_I1)));
+        }
+        #endregion
+
+        #region Register<Service>(Func<IResolverContract, Service>, RegistryScope?);
+
+        [TestMethod]
+        public void Register_6_WithValidArgs_RegistersService()
+        {
+            // setup
+            var container = new Container();
+            var registrar = new SimpleInjectorRegistrar(container);
+
+            // test
+            _ = registrar.Register<I1>(
+                scope: RegistryScope.Transient,
+                factory: resolver => new C_I1());
+
+            // assert
+            container.Verify();
+            var registrations = container.ExtractRootRegistrations();
+            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1)));
         }
         #endregion
 

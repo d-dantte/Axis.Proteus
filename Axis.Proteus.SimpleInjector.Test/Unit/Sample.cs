@@ -7,6 +7,9 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
     [TestClass]
     public class Sample
     {
+        /// <summary>
+        /// Demonstrating that simple injector accepts duplicate registration within collection registrations.
+        /// </summary>
         [TestMethod]
         public void TestMethod1()
         {

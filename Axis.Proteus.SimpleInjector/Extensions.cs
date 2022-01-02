@@ -1,5 +1,7 @@
 ﻿using Axis.Proteus.IoC;
 using SimpleInjector;
+using System;
+using System.Linq;
 
 namespace Axis.Proteus.SimpleInjector
 {
@@ -21,5 +23,22 @@ namespace Axis.Proteus.SimpleInjector
 
             else return Lifestyle.Scoped; //<-- till custom scopes are supported
         }
+
+        public static bool ContainsUnverifiedRegistration(this
+            Container container,
+            Type serviceType,
+            Type implementationType)
+        {
+            return container
+                .GetCurrentRegistrations()
+                .Where(registration => registration.ServiceType == serviceType)
+                .Where(registation => registation.ImplementationType == implementationType)
+                .Any();
+        }
+
+        public static bool ContainsUnverifiedRegistration(this
+            Container container,
+            Type serviceType)
+            => container.ContainsUnverifiedRegistration(serviceType, serviceType);
     }
 }

@@ -36,7 +36,16 @@ namespace Axis.Proteus.SimpleInjector
             Type serviceType,
             RegistryScope? scope = null)
         {
-            _container.Collection.Append(serviceType, serviceType, ToLifestyle(scope));
+            if (!_container.ContainsUnverifiedRegistration(serviceType))
+                _container.Register(
+                    serviceType,
+                    serviceType,
+                    scope.ToSimpleInjectorLifeStyle());
+
+            _container.Collection.Append(
+                serviceType,
+                serviceType,
+                scope.ToSimpleInjectorLifeStyle());
 
             return this;
         }
@@ -46,7 +55,16 @@ namespace Axis.Proteus.SimpleInjector
             Type concreteType,
             RegistryScope? scope = null)
         {
-            _container.Collection.Append(serviceType, concreteType, ToLifestyle(scope));
+            if (!_container.ContainsUnverifiedRegistration(serviceType, concreteType))
+                _container.Register(
+                    serviceType,
+                    concreteType,
+                    scope.ToSimpleInjectorLifeStyle());
+
+            _container.Collection.Append(
+                serviceType,
+                concreteType,
+                scope.ToSimpleInjectorLifeStyle());
 
             return this;
         }
@@ -56,6 +74,12 @@ namespace Axis.Proteus.SimpleInjector
             Func<IResolverContract, object> factory,
             RegistryScope? scope = null)
         {
+            if (!_container.ContainsUnverifiedRegistration(serviceType))
+                _container.Register(
+                    serviceType,
+                    () => factory.Invoke(_resolver),
+                    scope.ToSimpleInjectorLifeStyle());
+
             var convertDelegateFunction = _convertDelegateMethod.MakeGenericMethod(serviceType);
             var @delegate = convertDelegateFunction.InvokeFunc(_resolver, factory);
 
@@ -63,7 +87,7 @@ namespace Axis.Proteus.SimpleInjector
             _container.Collection.InvokeAction(
                 appendFactoryMethod,
                 @delegate,
-                ToLifestyle(scope));
+                scope.ToSimpleInjectorLifeStyle());
 
             return this;
         }
@@ -72,8 +96,17 @@ namespace Axis.Proteus.SimpleInjector
             RegistryScope? scope = null)
             where Impl : class
         {
-            var registration = ToLifestyle(scope).CreateRegistration(typeof(Impl), _container);
-            _container.Collection.Register(registration.Concat());
+            var serviceType = typeof(Impl);
+            if (!_container.ContainsUnverifiedRegistration(serviceType))
+                _container.Register(
+                    serviceType,
+                    serviceType,
+                    scope.ToSimpleInjectorLifeStyle());
+
+            _container.Collection.Append(
+                serviceType,
+                serviceType,
+                scope.ToSimpleInjectorLifeStyle());
 
             return this;
         }
@@ -83,7 +116,16 @@ namespace Axis.Proteus.SimpleInjector
             where Service : class
             where Impl : class, Service
         {
-            _container.Register<Service, Impl>(ToLifestyle(scope));
+            if (!_container.ContainsUnverifiedRegistration(typeof(Service)))
+                _container.Register(
+                    typeof(Service),
+                    typeof(Impl),
+                    scope.ToSimpleInjectorLifeStyle());
+
+            _container.Collection.Append(
+                typeof(Service),
+                typeof(Impl),
+                scope.ToSimpleInjectorLifeStyle());
 
             return this;
         }
@@ -93,9 +135,15 @@ namespace Axis.Proteus.SimpleInjector
             RegistryScope? scope = null)
             where Service : class
         {
-            _container.Register<Service>(
-                () => factory.Invoke(_resolver),
-                ToLifestyle(scope));
+            if (!_container.ContainsUnverifiedRegistration(typeof(Service)))
+                _container.Register(
+                    typeof(Service),
+                    () => factory.Invoke(_resolver),
+                    scope.ToSimpleInjectorLifeStyle());
+
+            _container.Collection.Append(
+                lifestyle: scope.ToSimpleInjectorLifeStyle(),
+                instanceCreator: () => factory.Invoke(_resolver));
 
             return this;
         }
@@ -115,8 +163,6 @@ namespace Axis.Proteus.SimpleInjector
         }
 
         #endregion
-
-        private static Lifestyle ToLifestyle(RegistryScope? scope) => scope.ToSimpleInjectorLifeStyle();
 
         private static Func<TService> ConvertDelegate<TService>(
             IResolverContract resolver,

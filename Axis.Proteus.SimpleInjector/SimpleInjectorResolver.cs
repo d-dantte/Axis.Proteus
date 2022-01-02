@@ -22,10 +22,10 @@ namespace Axis.Proteus.SimpleInjector
             _container.Dispose();
         }
 
-        public Service Resolve<Service>()
-            where Service : class => _container.GetAllInstances<Service>().FirstOrDefault();
+        public object Resolve(Type serviceType) => _container.GetInstance(serviceType);
 
-        public object Resolve(Type serviceType) => _container.GetAllInstances(serviceType).FirstOrDefault();
+        public Service Resolve<Service>()
+            where Service : class => _container.GetInstance<Service>();
 
         public IEnumerable<Service> ResolveAll<Service>()
             where Service : class => _container.GetAllInstances<Service>();
