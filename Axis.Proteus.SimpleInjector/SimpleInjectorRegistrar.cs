@@ -1,33 +1,32 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using Axis.Luna.Extensions;
 using Axis.Luna.FInvoke;
 using Axis.Proteus.IoC;
 using SimpleInjector;
 
 namespace Axis.Proteus.SimpleInjector
 {
-    public class SimpleInjectorRegistrar : IRegistrarContract
+    public class SimpleInjectorRegistrarContract : IRegistrarContract
     {
         private readonly Container _container;
         private readonly IResolverContract _resolver;
         private readonly MethodInfo _convertDelegateMethod;
         private readonly MethodInfo _appendFactoryMethod;
 
-        public SimpleInjectorRegistrar(Container container)
+        public SimpleInjectorRegistrarContract(Container container)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
             _resolver = new SimpleInjectorResolver(_container);
             _appendFactoryMethod = GetAppendFactoryMethod(_container);
-            _convertDelegateMethod = typeof(SimpleInjectorRegistrar)
+            _convertDelegateMethod = typeof(SimpleInjectorRegistrarContract)
                 .GetMethod(
                     nameof(SimpleInjectorRegistrar.ConvertDelegate),
                     BindingFlags.Static |
                     BindingFlags.NonPublic);
         }
 
-        public SimpleInjectorRegistrar() : this(new Container())
+        public SimpleInjectorRegistrarContract() : this(new Container())
         { }
 
         #region IServiceRegistrar
@@ -167,7 +166,7 @@ namespace Axis.Proteus.SimpleInjector
         private static Func<TService> ConvertDelegate<TService>(
             IResolverContract resolver,
             Func<IResolverContract, object> func)
-            where TService: class
+            where TService : class
             => () => func.Invoke(resolver) as TService;
 
         private static MethodInfo GetAppendFactoryMethod(Container container)
@@ -177,5 +176,16 @@ namespace Axis.Proteus.SimpleInjector
             return (expression.Body as MethodCallExpression).Method.GetGenericMethodDefinition();
         }
 
+    }
+
+    public class SimpleInjectorRegistrar : SimpleInjectorRegistrarContract
+    {
+
+        public SimpleInjectorRegistrar(Container container)
+            :base(container)
+        { }
+
+        public SimpleInjectorRegistrar() : this(new Container())
+        { }
     }
 }

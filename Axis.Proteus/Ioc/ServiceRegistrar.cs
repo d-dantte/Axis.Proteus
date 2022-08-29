@@ -39,7 +39,7 @@ namespace Axis.Proteus.IoC
         /// <param name="serviceType">The concrete type</param>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register(
+        public virtual ServiceRegistrar Register(
             Type serviceType,
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
@@ -57,7 +57,7 @@ namespace Axis.Proteus.IoC
         /// <param name="concreteType">The concrete service type to resolve to</params>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register(
+        public virtual ServiceRegistrar Register(
             Type serviceType,
             Type concreteType,
             RegistryScope? scope = null,
@@ -93,7 +93,7 @@ namespace Axis.Proteus.IoC
         /// <param name="factory">A factory method used to create the service type</param>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register(
+        public virtual ServiceRegistrar Register(
             Type serviceType,
             Func<IResolverContract, object> factory,
             RegistryScope? scope = null,
@@ -138,7 +138,7 @@ namespace Axis.Proteus.IoC
         /// <typeparam name="Impl">The concrete type to be registered and resolved</typeparam>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register<Impl>(
+        public virtual ServiceRegistrar Register<Impl>(
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
             where Impl : class => Register(typeof(Impl), scope, interceptorProfile);
@@ -150,7 +150,7 @@ namespace Axis.Proteus.IoC
         /// <typeparam name="Impl">The service implementation to be resolved for the service type</typeparam>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register<Service, Impl>(
+        public virtual ServiceRegistrar Register<Service, Impl>(
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
             where Service : class
@@ -164,7 +164,7 @@ namespace Axis.Proteus.IoC
         /// <param name="factory">A factory method used to create the service type</param>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
-        public ServiceRegistrar Register<Service>(
+        public virtual ServiceRegistrar Register<Service>(
             Func<IResolverContract, Service> factory,
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
@@ -178,7 +178,7 @@ namespace Axis.Proteus.IoC
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
         /// <param name="concreteTypes">Concrete types to be registered to the service type</param>
-        public ServiceRegistrar RegisterAll(
+        public virtual ServiceRegistrar RegisterAll(
             Type serviceType,
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null,
@@ -199,7 +199,7 @@ namespace Axis.Proteus.IoC
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
         /// <param name="concreteTypes">Concrete types to be registered to the service type</param>
-        public ServiceRegistrar RegisterAll<Service>(
+        public virtual ServiceRegistrar RegisterAll<Service>(
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null,
             params Type[] concreteTypes)
@@ -210,7 +210,7 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// Effectively locks the registrar (no longer accepts registration requests), and returns a Resolver that resovles all of the registered types.
         /// </summary>
-        public ServiceResolver BuildResolver()
+        public virtual ServiceResolver BuildResolver()
         {
             if (CanRegister())
             {
@@ -229,7 +229,7 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// 
         /// </summary>
-        internal readonly struct RegistrationMap
+        public readonly struct RegistrationMap
         {
             /// <summary>
             /// 

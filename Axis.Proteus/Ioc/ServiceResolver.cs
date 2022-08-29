@@ -15,7 +15,7 @@ namespace Axis.Proteus.IoC
 
         internal IEnumerable<ServiceRegistrar.RegistrationMap> Registrations => _interceptedRegistrations.Values.SelectMany();
 
-        internal ServiceResolver(
+        public ServiceResolver(
             IResolverContract resolverContract,
             IProxyGenerator proxyGenerator,
             IEnumerable<ServiceRegistrar.RegistrationMap> trackedRegistrations)
@@ -38,7 +38,7 @@ namespace Axis.Proteus.IoC
                 });
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             _resolverContract.Dispose();
         }
@@ -49,7 +49,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <typeparam name="Service">The type of the service to be resovled</typeparam>
         /// <returns>The resolved service, or null if it was not registered</returns>
-        public Service Resolve<Service>() where Service : class
+        public virtual Service Resolve<Service>() where Service : class
         {
             var instance = _resolverContract.Resolve<Service>();
             var instanceType = instance?.GetType();
@@ -86,7 +86,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <param name="serviceType">The typeof the service to be resolved</param>
         /// <returns>The resolved service, or null if it was not registered</returns>
-        public object Resolve(Type serviceType)
+        public virtual object Resolve(Type serviceType)
         {
             var instance = _resolverContract.Resolve(serviceType ?? throw new ArgumentNullException(nameof(serviceType)));
             var instanceType = instance?.GetType();
@@ -121,7 +121,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <typeparam name="Service">The service to be resolved</typeparam>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
-        public IEnumerable<Service> ResolveAll<Service>() where Service : class
+        public virtual IEnumerable<Service> ResolveAll<Service>() where Service : class
         {
             var instances = _resolverContract.ResolveAll<Service>().ToArray();
             if (instances.Length == 0)
@@ -161,7 +161,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <param name="serviceType">The service to be resolved</param>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
-        public IEnumerable<object> ResolveAll(Type serviceType)
+        public virtual IEnumerable<object> ResolveAll(Type serviceType)
         {
             var instances = _resolverContract.ResolveAll(serviceType).ToArray();
             if (instances.Length == 0)
