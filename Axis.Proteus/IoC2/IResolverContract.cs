@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Axis.Proteus.IoC;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-namespace Axis.Proteus.IoC
+namespace Axis.Proteus.IoC2
 {
     /// <summary>
     /// Interface defining contract for resolving instances from the underlying IoC container.
@@ -35,5 +37,11 @@ namespace Axis.Proteus.IoC
         /// <param name="serviceType">The service to be resolved</param>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
         IEnumerable<object> ResolveAll(Type serviceType);
+
+        /// <summary>
+        /// Retrieves a list of all registrations that can be resolved by this resolver
+        /// </summary>
+        /// <returns></returns>
+        ReadOnlyDictionary<Type, RegistrationInfo[]> Manifest();
     }
 }

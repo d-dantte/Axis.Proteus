@@ -35,5 +35,15 @@ namespace Axis.Proteus.Test.IoC
             scopeName = scopeObject;
             Assert.AreEqual(scopeObject.Name, scopeName);
         }
+
+        [TestMethod]
+        public void RegistryScope_DefaultTests()
+        {
+            RegistryScope defaultScope = default;
+            RegistryScope scope = RegistryScope.Transient;
+
+            Assert.AreEqual(defaultScope, scope);
+            Assert.AreEqual("Transient", defaultScope.Name);
+        }
     }
 }

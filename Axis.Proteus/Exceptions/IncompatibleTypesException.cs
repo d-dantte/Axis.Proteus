@@ -2,6 +2,7 @@
 
 namespace Axis.Proteus.Exceptions
 {
+    [Obsolete]
 	public class IncompatibleTypesException: Exception
 	{
 		public Type ServiceType { get; }

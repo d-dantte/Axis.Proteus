@@ -1,11 +1,12 @@
 ﻿using Axis.Luna.Extensions;
-using Axis.Proteus.Exceptions;
+using Axis.Luna.FInvoke;
 using Axis.Proteus.Interception;
 using Castle.DynamicProxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Axis.Proteus.IoC
 {
@@ -16,9 +17,11 @@ namespace Axis.Proteus.IoC
     /// </summary>
     public class ServiceRegistrar
     {
+        private static readonly MethodInfo _registerFactoryMethod = GetRegisterFactoryMethod();
+
         private readonly IRegistrarContract _registrar;
         private readonly IProxyGenerator _proxyGenerator;
-        private readonly HashSet<RegistrationMap> _trackedRegistrations = new HashSet<RegistrationMap>();
+        private readonly Dictionary<Type, List<RegistrationInfo>> _registrationManifest = new Dictionary<Type, List<RegistrationInfo>>();
         private ServiceResolver _serviceResolver;
 
         public ServiceRegistrar(IRegistrarContract registrar)
@@ -33,6 +36,7 @@ namespace Axis.Proteus.IoC
         }
 
         #region Registration Methods
+
         /// <summary>
         /// Register a concrete type. Concrete types cannot be registered more than once.
         /// </summary>
@@ -43,12 +47,7 @@ namespace Axis.Proteus.IoC
             Type serviceType,
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
-        {
-            if (!CanRegister())
-                throw new InvalidOperationException("Registry is locked");
-
-            return Register(serviceType, serviceType, scope, interceptorProfile);
-        }
+            => Register(serviceType, serviceType, scope, interceptorProfile);
 
         /// <summary>
         /// Register a concrete type
@@ -66,20 +65,13 @@ namespace Axis.Proteus.IoC
             if (!CanRegister())
                 throw new InvalidOperationException("Registry is locked");
 
-            if (serviceType == null)
-                throw new ArgumentNullException(nameof(serviceType));
-
-            if (concreteType == null)
-                throw new ArgumentNullException(nameof(concreteType));
-
-            if (!serviceType.IsAssignableFrom(concreteType))
-                throw new IncompatibleTypesException(serviceType, concreteType);
-
-            // if we can't add it, it's been registered already
-            if (!_trackedRegistrations.Add(new RegistrationMap(serviceType, concreteType, interceptorProfile)))
-                throw new DuplicateRegistrationException(serviceType);
-
-            _ = _registrar.Register(serviceType, concreteType, scope);
+            _registrationManifest
+                .GetOrAdd(serviceType, type => new List<RegistrationInfo>())
+                .Add(new RegistrationInfo(
+                    serviceType,
+                    IBoundImplementation.Of(concreteType),
+                    scope ?? default,
+                    interceptorProfile ?? default));
 
             return this;
         }
@@ -90,47 +82,18 @@ namespace Axis.Proteus.IoC
         /// the result of any two or more factory generated services.
         /// </summary>
         /// <param name="serviceType">The type of the service</param>
-        /// <param name="factory">A factory method used to create the service type</param>
+        /// <param name="factory">A factory method used to create the service type. Note that this delegate MUST safely be castable to: <c>Func&lt;IRegistrarContract, TServiceType&gt;</c></param>
         /// <param name="scope">The resolution scope</param>
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
         public virtual ServiceRegistrar Register(
             Type serviceType,
-            Func<IResolverContract, object> factory,
+            Delegate factory,
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
-        {
-            if (!CanRegister())
-                throw new InvalidOperationException("Registry is locked");
-
-            if (interceptorProfile == null)
-                _ = _registrar.Register(serviceType, factory, scope);
-
-            else
-            {
-                _ = _registrar.Register(
-                    serviceType: serviceType,
-                    scope: scope,
-                    factory: resolver =>
-                    {
-                        var instance = factory.Invoke(resolver);
-                        var proxy = serviceType.IsClass
-                            ? _proxyGenerator.CreateClassProxyWithTarget(
-                                serviceType,
-                                new[] {typeof(IProxyMarker)},
-                                instance,
-                                interceptorProfile.Value.Interceptors.ToArray())
-                            : _proxyGenerator.CreateInterfaceProxyWithTarget(
-                                serviceType,
-                                new[] { typeof(IProxyMarker) },
-                                instance,
-                                interceptorProfile.Value.Interceptors.ToArray());
-
-                        return proxy;
-                    });
-            }
-
-            return this;
-        }
+            => _registerFactoryMethod
+                .MakeGenericMethod(serviceType)
+                .ApplyTo(method => this.InvokeFunc(method, factory, scope, interceptorProfile))
+                .As<ServiceRegistrar>();
 
         /// <summary>
         /// Register a concrete type
@@ -141,7 +104,8 @@ namespace Axis.Proteus.IoC
         public virtual ServiceRegistrar Register<Impl>(
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
-            where Impl : class => Register(typeof(Impl), scope, interceptorProfile);
+            where Impl : class
+            => Register<Impl, Impl>(scope, interceptorProfile);
 
         /// <summary>
         /// Register a concrete implementation for a service type
@@ -155,7 +119,21 @@ namespace Axis.Proteus.IoC
             InterceptorProfile? interceptorProfile = null)
             where Service : class
             where Impl : class, Service
-            => Register(typeof(Service), typeof(Impl), scope, interceptorProfile);
+        {
+            if (!CanRegister())
+                throw new InvalidOperationException("Registry is locked");
+
+            var serviceType = typeof(Service);
+            _registrationManifest
+                .GetOrAdd(serviceType, type => new List<RegistrationInfo>())
+                .Add(new RegistrationInfo(
+                    serviceType,
+                    IBoundImplementation.Of(typeof(Impl)),
+                    scope ?? default,
+                    interceptorProfile ?? default));
+
+            return this;
+        }
 
         /// <summary>
         /// Register a factory method that should be used in resolving instances of a service interface/type
@@ -169,7 +147,21 @@ namespace Axis.Proteus.IoC
             RegistryScope? scope = null,
             InterceptorProfile? interceptorProfile = null)
             where Service : class
-            => Register(typeof(Service), factory, scope, interceptorProfile);
+        {
+            if (!CanRegister())
+                throw new InvalidOperationException("Registry is locked");
+
+            var serviceType = typeof(Service);
+            _registrationManifest
+                .GetOrAdd(serviceType, type => new List<RegistrationInfo>())
+                .Add(new RegistrationInfo(
+                    serviceType,
+                    IBoundImplementation.Of(typeof(Service), factory),
+                    scope ?? default,
+                    interceptorProfile ?? default));
+
+            return this;
+        }
 
         /// <summary>
         /// Register a list of concrete types for the given service type
@@ -184,10 +176,10 @@ namespace Axis.Proteus.IoC
             InterceptorProfile? interceptorProfile = null,
             params Type[] concreteTypes)
         {
-            if (!CanRegister())
-                throw new InvalidOperationException("Registry is locked");
+            if (concreteTypes == null)
+                throw new ArgumentNullException(nameof(concreteTypes));
 
-            concreteTypes?.ForAll(type => Register(serviceType, type, scope, interceptorProfile));
+            concreteTypes.ForAll(type => Register(serviceType, type, scope, interceptorProfile));
 
             return this;
         }
@@ -212,84 +204,69 @@ namespace Axis.Proteus.IoC
         /// </summary>
         public virtual ServiceResolver BuildResolver()
         {
-            if (CanRegister())
+            if (!CanRegister())
+                return _serviceResolver ?? throw new InvalidOperationException("The resolver is not yet initialized");
+
+            // register the types in the manifest on the IRegistrarContract
+            foreach(var infoMap in _registrationManifest)
             {
-                _serviceResolver = new ServiceResolver(
-                    _registrar.BuildResolver(),
-                    _proxyGenerator,
-                    _trackedRegistrations);
-                //clear the trackedRegistrations??
+                foreach(var info in infoMap.Value)
+                {
+                    _ = info.Implementation switch
+                    {
+                        IBoundImplementation.ImplType implType => _registrar.Register(
+                            infoMap.Key,
+                            implType.Type,
+                            info.Scope),
+
+                        IBoundImplementation.ImplFactory factory => _registrar.Register(
+                            infoMap.Key,
+                            factory.Factory,
+                            info.Scope),
+
+                        _ => throw new InvalidOperationException($"Invalid implementation type: {info.Implementation}")
+                    };
+                }
             }
 
-            return _serviceResolver;
+            return _serviceResolver = new ServiceResolver(
+                _registrar.BuildResolver(),
+                _proxyGenerator,
+                _registrationManifest);
         }
 
-        private bool CanRegister() => _serviceResolver == null;
+        private bool CanRegister() => !_registrar.IsRegistrationClosed();
 
         /// <summary>
-        /// 
+        /// For testing purposes
         /// </summary>
-        public readonly struct RegistrationMap
+        public IEnumerable<RegistrationInfo> RegistrationsFor(Type serviceType)
+            => _registrationManifest
+                .GetOrDefault(serviceType)?
+                .AsEnumerable();
+
+        /// <summary>
+        /// For testing purposes
+        /// </summary>
+        public IEnumerable<RegistrationInfo> RegistrationsFor<ServiceType>()
+            => _registrationManifest
+                .GetOrDefault(typeof(ServiceType))?
+                .AsEnumerable();
+
+        #region Method Accessor
+
+        private static MethodInfo GetRegisterFactoryMethod()
         {
-            /// <summary>
-            /// 
-            /// </summary>
-            internal Type ServiceType { get; }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            internal Type ImplementationType { get; }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            internal InterceptorProfile? InterceptorProfile { get; }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="serviceType"></param>
-            /// <param name="implementationType"></param>
-            /// <param name="interceptorProfile"></param>
-            public RegistrationMap(Type serviceType, Type implementationType, InterceptorProfile? interceptorProfile = null)
-            {
-                ServiceType = serviceType
-                    .ThrowIfNull(new ArgumentNullException(nameof(serviceType)))
-                    .ThrowIf(t => !(t.IsPlainClass() || t.IsInterface), new ArgumentException($"{serviceType} must be a class or interface (not a delegate)"));
-
-                ImplementationType = implementationType
-                    .ThrowIfNull(new ArgumentNullException(nameof(implementationType)))
-                    .ThrowIf(t => !t.IsPlainClass(), new ArgumentException());
-
-                InterceptorProfile = interceptorProfile;
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="concreteType"></param>
-            /// <param name="interceptorProfile"></param>
-            public RegistrationMap(Type concreteType, InterceptorProfile? interceptorProfile = null)
-            : this(concreteType, concreteType, interceptorProfile)
-            {
-            }
-
-            public override int GetHashCode() => HashCode.Combine(ServiceType, ImplementationType);
-
-            public override bool Equals(object obj)
-            {
-                return obj is RegistrationMap other
-                    && other.ServiceType == ServiceType
-                    && other.ImplementationType == ImplementationType;
-            }
-
-            public override string ToString()
-            => $"[{ServiceType?.FullName ?? null}::{ImplementationType?.FullName ?? null}]{(InterceptorProfile == null ? string.Empty : '*'.ToString())}";
-
-            public static bool operator ==(RegistrationMap first, RegistrationMap second) => first.Equals(second);
-
-            public static bool operator !=(RegistrationMap first, RegistrationMap second) => !(first == second);
+            ServiceRegistrar c = null;
+            Expression<Func<Func<IResolverContract, IFake>, RegistryScope?, InterceptorProfile?, ServiceRegistrar>> expression = (f, a, b) => c.Register(f, a, b);
+            return (expression.Body as MethodCallExpression).Method.GetGenericMethodDefinition();
         }
+        #endregion
+
+        #region inner types
+        internal interface IFake { }
+
+        internal class FakeImpl : IFake { }
+        #endregion
     }
 }

@@ -5,6 +5,7 @@ using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.Linq;
 
 namespace Axis.Proteus.Test.IoC
 {
@@ -20,49 +21,45 @@ namespace Axis.Proteus.Test.IoC
 
 		#region Register(Type, RegistryScope?, InterceptorProfile?);
 		[TestMethod]
-		public void Register_1_WithValidServiceType_ShouldRegister()
+		public void Register_1_WithValidServiceType_ShouldAddRegistration()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(C_I1),
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register(
+					typeof(C_I1),
+					RegistryScope.Transient,
+					null)
+				.RegistrationsFor(typeof(C_I1));
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			var info = registrations.First();
+			Assert.AreEqual(typeof(C_I1), info.ServiceType);
+			var implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
+			Assert.AreEqual(default, info.Profile);
 
 			// test
 			registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(C_I1),
-				RegistryScope.Transient,
-				new InterceptorProfile(new DummyInterceptor()));
+			var profile = new InterceptorProfile(new DummyInterceptor());
+			registrations = registrar
+				.Register(
+					typeof(C_I1),
+					RegistryScope.Transient,
+					profile)
+				.RegistrationsFor(typeof(C_I1));
 
-			_registrarMock.Verify(
-				times: Times.Exactly(2),
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			info = registrations.First();
+			Assert.AreEqual(typeof(C_I1), info.ServiceType);
+			implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(profile, info.Profile);
 		}
 
 		[TestMethod]
@@ -80,70 +77,56 @@ namespace Axis.Proteus.Test.IoC
 		}
 
 		[TestMethod]
-		public void Register_1_WithDuplicateRegistration_ShouldThrowException()
+		public void Register_1_WithDuplicateRegistration_ShouldAddRegistration()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(C_I1),
-				RegistryScope.Transient,
-				null);
-			Assert.ThrowsException<DuplicateRegistrationException>(
-				() => registrar.Register(
+			var registrations = registrar
+				.Register(
 					typeof(C_I1),
 					RegistryScope.Transient,
-					null));
+					null)
+				.Register(
+					typeof(C_I1),
+					RegistryScope.Transient,
+					null)
+				.RegistrationsFor(typeof(C_I1))
+				.ToArray();
+
+			Assert.AreEqual(2, registrations.Length);
+			Assert.AreEqual(registrations[0], registrations[1]);
 		}
 
 		#endregion
 
 		#region Register(Type, Type, RegistryScope?, InterceptorProfile?);
 		[TestMethod]
-		public void Register_2_WithValidServiceType_ShouldRegister()
+		public void Register_2_WithValidServiceType_ShouldAddRegistration()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(I1),
-				typeof(C_I1),
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register(
+					typeof(I1),
+					typeof(C_I1),
+					RegistryScope.Transient,
+					null)
+				.RegistrationsFor(typeof(I1));
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			var info = registrations.First();
+			Assert.AreEqual(typeof(I1), info.ServiceType);
+			var implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
+			Assert.AreEqual(default, info.Profile);
 		}
 
 		[TestMethod]
 		public void Register_2_WithNullTypes_ShouldThrowException()
 		{
-			// nothing to setup
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
 			Assert.ThrowsException<ArgumentNullException>(
@@ -162,44 +145,26 @@ namespace Axis.Proteus.Test.IoC
 		}
 
 		[TestMethod]
-		public void Register_2_WithIncompatibleTypes_ShouldThrowException()
-		{
-			// nothing to setup
-
-			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			Assert.ThrowsException<IncompatibleTypesException>(
-				() => registrar.Register(
-					typeof(I2),
-					typeof(C_I1),
-					RegistryScope.Transient,
-					null));
-		}
-
-		[TestMethod]
 		public void Register_2_WithDuplicateRegistration_ShouldThrowException()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(I1),
-				typeof(C_I1),
-				RegistryScope.Transient,
-				null);
-			Assert.ThrowsException<DuplicateRegistrationException>(
-				() => registrar.Register(
+			var registrations = registrar
+				.Register(
 					typeof(I1),
 					typeof(C_I1),
 					RegistryScope.Transient,
-					null));
+					null)
+				.Register(
+					typeof(I1),
+					typeof(C_I1),
+					RegistryScope.Transient,
+					null)
+				.RegistrationsFor(typeof(I1))
+				.ToArray();
+
+			Assert.AreEqual(2, registrations.Length);
+			Assert.AreEqual(registrations[0], registrations[1]);
 		}
 		#endregion
 
@@ -208,42 +173,24 @@ namespace Axis.Proteus.Test.IoC
 		[TestMethod]
 		public void Register_3_WithValidArgs_ShouldRegister()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register(
-				typeof(I1),
-				_r => new C_I1(),
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register(
+					typeof(I1),
+					new Func<IResolverContract, I1>(_r => new C_I1()),
+					RegistryScope.Transient,
+					null)
+				.Register(
+					typeof(I1),
+					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
+					RegistryScope.Singleton,
+					new InterceptorProfile(new DummyInterceptor()))
+				.RegistrationsFor(typeof(I1))
+				.ToArray();
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()));
-
-
-			_ = registrar.Register(
-				typeof(I1),
-				_r => new C_I1(),
-				RegistryScope.Transient,
-				new InterceptorProfile(new DummyInterceptor()));
-
-			_registrarMock.Verify(
-				times: Times.Exactly(2),
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.AreEqual(2, registrations.Length);
+			Assert.AreEqual(RegistryScope.Singleton, registrations[1].Scope);
 		}
 		#endregion
 
@@ -251,40 +198,52 @@ namespace Axis.Proteus.Test.IoC
 		[TestMethod]
 		public void Register_4_WithValidServiceType_ShouldRegister()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register<C_I1>(It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
-			_registrarMock
-				.Setup(r => r.Register<C_I1, C_I1>(It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register<C_I1>(
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register<C_I1>(RegistryScope.Transient, null)
+				.RegistrationsFor(typeof(C_I1));
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			var info = registrations.First();
+			Assert.AreEqual(typeof(C_I1), info.ServiceType);
+			var implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
+			Assert.AreEqual(default, info.Profile);
 
 			// test
 			registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register<C_I1>(
-				RegistryScope.Transient,
-				new InterceptorProfile(new DummyInterceptor()));
+			var profile = new InterceptorProfile(new DummyInterceptor());
+			registrations = registrar
+				.Register<C_I1>(RegistryScope.Transient, profile)
+				.RegistrationsFor(typeof(C_I1));
 
-			_registrarMock.Verify(
-				times: Times.Exactly(2),
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			info = registrations.First();
+			Assert.AreEqual(typeof(C_I1), info.ServiceType);
+			implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(profile, info.Profile);
+		}
+
+		[TestMethod]
+		public void Register_4_WithDuplicateRegistration_ShouldAddRegistration()
+		{
+			// test
+			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrations = registrar
+				.Register<C_I1>(RegistryScope.Transient, null)
+				.Register<C_I1>(RegistryScope.Transient, null)
+				.RegistrationsFor(typeof(C_I1))
+				.ToArray();
+
+			Assert.AreEqual(2, registrations.Length);
+			Assert.AreEqual(registrations[0], registrations[1]);
 		}
 		#endregion
 
@@ -292,23 +251,37 @@ namespace Axis.Proteus.Test.IoC
 		[TestMethod]
 		public void Register_5_WithValidServiceType_ShouldRegister()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register<I1, C_I1>(It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
 			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register<I1, C_I1>(
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register<I1, C_I1>(RegistryScope.Transient, null)
+				.RegistrationsFor(typeof(I1));
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Type>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.IsNotNull(registrations);
+			var info = registrations.First();
+			Assert.AreEqual(typeof(I1), info.ServiceType);
+			var implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
+			Assert.AreEqual(default, info.Profile);
+
+			// test
+			registrar = new ServiceRegistrar(_registrarMock.Object);
+			var profile = new InterceptorProfile(new DummyInterceptor());
+			registrations = registrar
+				.Register<I1, C_I1>(RegistryScope.Transient, profile)
+				.RegistrationsFor(typeof(I1));
+
+			Assert.IsNotNull(registrations);
+			info = registrations.First();
+			Assert.AreEqual(typeof(I1), info.ServiceType);
+			implT = info.Implementation as IBoundImplementation.ImplType;
+			Assert.IsNotNull(implT);
+			Assert.AreEqual(typeof(C_I1), implT.Type);
+			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(profile, info.Profile);
 		}
 		#endregion
 
@@ -317,40 +290,22 @@ namespace Axis.Proteus.Test.IoC
 		[TestMethod]
 		public void Register_6_WithValidArgs_ShouldRegister()
 		{
-			// setup
-			_registrarMock
-				.Setup(r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()))
-				.Returns(_registrarMock.Object);
-
-			// test 1
+			// test
 			var registrar = new ServiceRegistrar(_registrarMock.Object);
-			_ = registrar.Register<I1>(
-				_r => new C_I1(),
-				RegistryScope.Transient,
-				null);
+			var registrations = registrar
+				.Register(
+					new Func<IResolverContract, I1>(_r => new C_I1()),
+					RegistryScope.Transient,
+					null)
+				.Register(
+					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
+					RegistryScope.Singleton,
+					new InterceptorProfile(new DummyInterceptor()))
+				.RegistrationsFor(typeof(I1))
+				.ToArray();
 
-			_registrarMock.Verify(
-				times: Times.Once,
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()));
-
-			// test 2
-			_ = registrar.Register<I2>(
-				_r => new C_I2(),
-				RegistryScope.Transient,
-				new InterceptorProfile(new DummyInterceptor()));
-
-			_registrarMock.Verify(
-				times: Times.Exactly(2),
-				expression: r => r.Register(
-					It.IsAny<Type>(),
-					It.IsAny<Func<IResolverContract, object>>(),
-					It.IsAny<RegistryScope?>()));
+			Assert.AreEqual(2, registrations.Length);
+			Assert.AreEqual(RegistryScope.Singleton, registrations[1].Scope);
 		}
 		#endregion
 	}

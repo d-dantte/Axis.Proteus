@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Axis.Proteus.Test.IoC
 {
-    using Registration = ServiceRegistrar.RegistrationMap;
+    using Registration = RegistrationInfo;
 
     [TestClass]
     public class ServiceResolverTest
@@ -23,13 +23,11 @@ namespace Axis.Proteus.Test.IoC
         [TestMethod]
         public void Constructor_WithValidArgs_ShouldReturnValidObject()
         {
-            // setup
-
             // test
             var resolver = new ServiceResolver(
                 _mockResolver.Object,
                 _mockProxyGenerator.Object,
-                Array.Empty<Registration>());
+                new Dictionary<Type, List<Registration>>());
 
             Assert.AreEqual(0, resolver.Registrations.Count());
         }
@@ -43,38 +41,21 @@ namespace Axis.Proteus.Test.IoC
             Assert.ThrowsException<ArgumentNullException>(() => new ServiceResolver(
                 null,
                 _mockProxyGenerator.Object,
-                Array.Empty<Registration>()));
+                new Dictionary<Type, List<Registration>>()));
 
             //test
             Assert.ThrowsException<ArgumentNullException>(() => new ServiceResolver(
                 _mockResolver.Object,
                 null,
-                Array.Empty<Registration>()));
+                new Dictionary<Type, List<Registration>>()));
 
             //test
             Assert.ThrowsException<ArgumentNullException>(() => new ServiceResolver(
                 _mockResolver.Object,
                 _mockProxyGenerator.Object,
-                null));
+                (IEnumerable<Registration>)null));
         }
 
-        [TestMethod]
-        public void Constructor_WithInvalidRegistration_ShouldFilterOutInvalidRegistrations()
-        {
-            // setup
-            var profile = new InterceptorProfile(new DummyInterceptor());
-            var registrations = default(Registration).Concat(
-                new Registration(typeof(C1_I1)),
-                new Registration(typeof(I2), typeof(C2_I2), profile));
-
-            // test
-            var resolver = new ServiceResolver(
-                _mockResolver.Object,
-                _mockProxyGenerator.Object,
-                registrations);
-
-            Assert.AreEqual(1, resolver.Registrations.Count());
-        }
         #endregion
 
         #region Dispose
@@ -114,7 +95,7 @@ namespace Axis.Proteus.Test.IoC
             var resolver = new ServiceResolver(
                 _mockResolver.Object,
                 _mockProxyGenerator.Object,
-                Array.Empty<Registration>());
+                new Dictionary<Type, List<Registration>>());
 
             // test
             var obj = resolver.Resolve<I1>();
@@ -137,7 +118,7 @@ namespace Axis.Proteus.Test.IoC
             var resolver = new ServiceResolver(
                 _mockResolver.Object,
                 _mockProxyGenerator.Object,
-                Array.Empty<Registration>());
+                new Dictionary<Type, List<Registration>>());
 
             // test
             var obj = resolver.Resolve<I1>();
@@ -173,7 +154,8 @@ namespace Axis.Proteus.Test.IoC
                 new[] { 
                     new Registration(
                         typeof(I1),
-                        typeof(C1_I1),
+                        IBoundImplementation.Of(typeof(C1_I1)),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -211,6 +193,7 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(C1_I1),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -297,7 +280,8 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(I1),
-                        typeof(C1_I1),
+                        IBoundImplementation.Of(typeof(C1_I1)),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -335,6 +319,7 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(C1_I1),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -421,7 +406,8 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(I1),
-                        typeof(C1_I1),
+                        IBoundImplementation.Of(typeof(C1_I1)),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -459,6 +445,7 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(C1_I1),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -545,7 +532,8 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(I1),
-                        typeof(C1_I1),
+                        IBoundImplementation.Of(typeof(C1_I1)),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test
@@ -583,6 +571,7 @@ namespace Axis.Proteus.Test.IoC
                 new[] {
                     new Registration(
                         typeof(C1_I1),
+                        default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
             // test

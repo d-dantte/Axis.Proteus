@@ -63,7 +63,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             _ = registrar.Register(
                 serviceType: typeof(I1),
                 scope: RegistryScope.Transient,
-                factory: resolver => new C_I1());
+                factory: new Func<IResolverContract, I1>(resolver => new C_I1()));
 
             // assert
             container.Verify();

@@ -14,21 +14,21 @@ namespace Axis.Proteus.IoC
         public static readonly RegistryScope Singleton = new RegistryScope("Singleton");
 
         /// <summary>
-        /// Transient scope
-        /// </summary>
-        public static readonly RegistryScope Transient = new RegistryScope("Transient");
-
-        /// <summary>
         /// Named-scope.
         /// </summary>
         public static readonly RegistryScope DefaultScope = new RegistryScope("DefaultScope");
+
+        /// <summary>
+        /// Transient scope
+        /// </summary>
+        public static readonly RegistryScope Transient = default;
 
         private readonly string _name;
 
         /// <summary>
         /// The name of the scope
         /// </summary>
-        public string Name => _name ?? Transient.Name;
+        public string Name => _name ?? "Transient";
 
 
         /// <summary>

@@ -11,31 +11,26 @@ namespace Axis.Proteus.IoC
     {
         private readonly IProxyGenerator _proxyGenerator;
         private readonly IResolverContract _resolverContract;
-        private readonly Dictionary<Type, HashSet<ServiceRegistrar.RegistrationMap>> _interceptedRegistrations = new Dictionary<Type, HashSet<ServiceRegistrar.RegistrationMap>>();
+        private readonly Dictionary<Type, List<RegistrationInfo>> _manifest = new Dictionary<Type, List<RegistrationInfo>>();
 
-        internal IEnumerable<ServiceRegistrar.RegistrationMap> Registrations => _interceptedRegistrations.Values.SelectMany();
+        public IEnumerable<RegistrationInfo> Registrations => _manifest.Values.SelectMany();
 
         public ServiceResolver(
             IResolverContract resolverContract,
             IProxyGenerator proxyGenerator,
-            IEnumerable<ServiceRegistrar.RegistrationMap> trackedRegistrations)
+            IEnumerable<RegistrationInfo> flatManifest)
+            :this(resolverContract, proxyGenerator, ToDictionary(flatManifest))
+        {
+        }
+
+        public ServiceResolver(
+            IResolverContract resolverContract,
+            IProxyGenerator proxyGenerator,
+            Dictionary<Type, List<RegistrationInfo>> registrationManifest)
         {
             _proxyGenerator = proxyGenerator ?? throw new ArgumentNullException(nameof(proxyGenerator));
             _resolverContract = resolverContract ?? throw new ArgumentNullException(nameof(resolverContract));
-
-            // gather only registrations that are intercepted
-            _ = trackedRegistrations
-                .ThrowIfNull(new ArgumentNullException(nameof(trackedRegistrations)))
-                .Where(registration => registration.InterceptorProfile != null)
-                .Where(registration => !registration.IsDefault())
-                .Aggregate(_interceptedRegistrations, (registrations, next) =>
-                {
-                    registrations
-                        .GetOrAdd(next.ServiceType, t => new HashSet<ServiceRegistrar.RegistrationMap>())
-                        .Add(next);
-
-                    return registrations;
-                });
+            _manifest = registrationManifest ?? throw new ArgumentNullException(nameof(registrationManifest));
         }
 
         public virtual void Dispose()
@@ -52,33 +47,32 @@ namespace Axis.Proteus.IoC
         public virtual Service Resolve<Service>() where Service : class
         {
             var instance = _resolverContract.Resolve<Service>();
-            var instanceType = instance?.GetType();
 
             if (instance == null)
                 return null;
 
-            if (!instanceType.Implements(typeof(IProxyMarker))
-                && TryFindServiceRegistration(typeof(Service), instanceType, out var registration))
-            {
-                return typeof(Service).IsClass
-                    ? _proxyGenerator
-                        .CreateClassProxyWithTarget(
-                            typeof(Service),
-                            new[] { typeof(IProxyMarker) },
-                            instance,
-                            registration.InterceptorProfile.Value.Interceptors.ToArray())
-                        .As<Service>()
-                    : _proxyGenerator
-                        .CreateInterfaceProxyWithTarget(
-                            typeof(Service),
-                            new[] { typeof(IProxyMarker) },
-                            instance,
-                            registration.InterceptorProfile.Value.Interceptors.ToArray())
-                        .As<Service>();
-            }
+            var info = _manifest[typeof(Service)]
+                .FirstOrDefault()
+                .ThrowIfDefault(new InvalidOperationException($"No registration found in the manifest for Service: {typeof(Service)}"));
 
-            else
+            if (info.Profile == default)
                 return instance;
+
+            return typeof(Service).IsClass
+                ? _proxyGenerator
+                    .CreateClassProxyWithTarget(
+                        typeof(Service),
+                        new[] { typeof(IProxyMarker) },
+                        instance,
+                        info.Profile.Interceptors.ToArray())
+                    .As<Service>()
+                : _proxyGenerator
+                    .CreateInterfaceProxyWithTarget(
+                        typeof(Service),
+                        new[] { typeof(IProxyMarker) },
+                        instance,
+                        info.Profile.Interceptors.ToArray())
+                    .As<Service>();
         }
 
         /// <summary>
@@ -88,32 +82,31 @@ namespace Axis.Proteus.IoC
         /// <returns>The resolved service, or null if it was not registered</returns>
         public virtual object Resolve(Type serviceType)
         {
-            var instance = _resolverContract.Resolve(serviceType ?? throw new ArgumentNullException(nameof(serviceType)));
-            var instanceType = instance?.GetType();
+            var instance = _resolverContract.Resolve(serviceType);
 
             if (instance == null)
                 return null;
 
-            if (!instanceType.Implements(typeof(IProxyMarker))
-                && TryFindServiceRegistration(serviceType, instanceType, out var registration))
-            {
-                return serviceType.IsClass
-                    ? _proxyGenerator
-                        .CreateClassProxyWithTarget(
-                            serviceType,
-                            new[] { typeof(IProxyMarker) },
-                            instance,
-                            registration.InterceptorProfile.Value.Interceptors.ToArray())
-                    : _proxyGenerator
-                        .CreateInterfaceProxyWithTarget(
-                            serviceType,
-                            new[] { typeof(IProxyMarker) },
-                            instance,
-                            registration.InterceptorProfile.Value.Interceptors.ToArray());
-            }
+            var info = _manifest[serviceType]
+                .FirstOrDefault()
+                .ThrowIfDefault(new InvalidOperationException($"No registration found in the manifest for Service: {serviceType}"));
 
-            else
+            if (info.Profile == default)
                 return instance;
+
+            return serviceType.IsClass
+                ? _proxyGenerator
+                    .CreateClassProxyWithTarget(
+                        serviceType,
+                        new[] { typeof(IProxyMarker) },
+                        instance,
+                        info.Profile.Interceptors.ToArray())
+                : _proxyGenerator
+                    .CreateInterfaceProxyWithTarget(
+                        serviceType,
+                        new[] { typeof(IProxyMarker) },
+                        instance,
+                        info.Profile.Interceptors.ToArray());
         }
 
         /// <summary>
@@ -123,37 +116,38 @@ namespace Axis.Proteus.IoC
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
         public virtual IEnumerable<Service> ResolveAll<Service>() where Service : class
         {
-            var instances = _resolverContract.ResolveAll<Service>().ToArray();
-            if (instances.Length == 0)
-                return Array.Empty<Service>();
-
-            return instances.Select((instance, index) =>
-            {
-                var instanceType = instance.GetType();
-
-                if (!instanceType.Implements(typeof(IProxyMarker))
-                    && TryFindServiceRegistration(typeof(Service), instanceType, out var registration))
+            return _resolverContract
+                .ResolveAll<Service>()
+                .PairWith(_manifest[typeof(Service)])
+                .Select((pair, index) =>
                 {
+                    var instance = pair.first;
+
+                    if (instance == null)
+                        return null;
+
+                    var info = pair.second.ThrowIfDefault(
+                        new InvalidOperationException($"Invalid registration found at index: {index}, for service {typeof(Service)}"));
+
+                    if (info.Profile == default)
+                        return instance;
+
                     return typeof(Service).IsClass
                         ? _proxyGenerator
                             .CreateClassProxyWithTarget(
                                 typeof(Service),
                                 new[] { typeof(IProxyMarker) },
                                 instance,
-                                registration.InterceptorProfile.Value.Interceptors.ToArray())
+                                info.Profile.Interceptors.ToArray())
                             .As<Service>()
                         : _proxyGenerator
                             .CreateInterfaceProxyWithTarget(
                                 typeof(Service),
                                 new[] { typeof(IProxyMarker) },
                                 instance,
-                                registration.InterceptorProfile.Value.Interceptors.ToArray())
+                                info.Profile.Interceptors.ToArray())
                             .As<Service>();
-                }
-
-                else
-                    return instance;
-            });
+                });
         }
 
         /// <summary>
@@ -163,53 +157,43 @@ namespace Axis.Proteus.IoC
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
         public virtual IEnumerable<object> ResolveAll(Type serviceType)
         {
-            var instances = _resolverContract.ResolveAll(serviceType).ToArray();
-            if (instances.Length == 0)
-                return Array.Empty<object>();
-
-            return instances.Select((instance, index) =>
-            {
-                var instanceType = instance.GetType();
-
-                if (!instanceType.Implements(typeof(IProxyMarker))
-                    && TryFindServiceRegistration(serviceType, instanceType, out var registration))
+            return _resolverContract
+                .ResolveAll(serviceType)
+                .PairWith(_manifest[serviceType])
+                .Select((pair, index) =>
                 {
+                    var instance = pair.first;
+
+                    if (instance == null)
+                        return null;
+
+                    var info = pair.second.ThrowIfDefault(
+                        new InvalidOperationException($"Invalid registration found at index: {index}, for service {serviceType}"));
+
+                    if (info.Profile == default)
+                        return instance;
+
                     return serviceType.IsClass
                         ? _proxyGenerator
                             .CreateClassProxyWithTarget(
                                 serviceType,
                                 new[] { typeof(IProxyMarker) },
                                 instance,
-                                registration.InterceptorProfile.Value.Interceptors.ToArray())
+                                info.Profile.Interceptors.ToArray())
                         : _proxyGenerator
                             .CreateInterfaceProxyWithTarget(
                                 serviceType,
                                 new[] { typeof(IProxyMarker) },
                                 instance,
-                                registration.InterceptorProfile.Value.Interceptors.ToArray());
-                }
-
-                else
-                    return instance;
-            });
+                                info.Profile.Interceptors.ToArray());
+                });
         }
 
-
-        private bool TryFindServiceRegistration(Type serviceType, Type instanceType, out ServiceRegistrar.RegistrationMap registration)
+        private static Dictionary<Type, List<RegistrationInfo>> ToDictionary(IEnumerable<RegistrationInfo> flatManifest)
         {
-            registration = default;
-
-            if (!_interceptedRegistrations.ContainsKey(serviceType))
-                return false;
-
-            var registrations = _interceptedRegistrations[serviceType];
-            var map = new ServiceRegistrar.RegistrationMap(serviceType, instanceType);
-
-            if (!registrations.Contains(map))
-                return false;
-
-            registration = registrations.First(m => m.Equals(map));
-            return true;
+            return flatManifest
+                .GroupBy(info => info.ServiceType)
+                .ToDictionary(g => g.Key, g => g.ToList());
         }
     }
 }

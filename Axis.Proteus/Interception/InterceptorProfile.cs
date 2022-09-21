@@ -26,9 +26,9 @@ namespace Axis.Proteus.Interception
 		{
 			_interceptors = interceptors
 				.ThrowIfNull(new ArgumentNullException(nameof(interceptors)))
-				.ThrowIf(ContainsNull, new ArgumentException("Null Interceptor found"))
 				.ToArray()
-				.ThrowIf(Empty, new ArgumentException("Interceptor list cannot be empty"));
+				.ThrowIf(ContainsNull, new ArgumentException("Null Interceptor found"))
+				.ThrowIf(IsEmpty, new ArgumentException("Interceptor list cannot be empty"));
 
 			_hashCode = ValueHash(_interceptors);
 		}
@@ -44,7 +44,7 @@ namespace Axis.Proteus.Interception
 
 		private static bool ContainsNull(IEnumerable<IInterceptor> interceptors) => interceptors.Any(i => i == null);
 
-		private static bool Empty(IInterceptor[] interceptors) => interceptors.Length <= 0;
+		private static bool IsEmpty(IInterceptor[] interceptors) => interceptors.Length <= 0;
 
 		public override int GetHashCode() => _hashCode;
 
@@ -53,8 +53,12 @@ namespace Axis.Proteus.Interception
 			return obj is InterceptorProfile other
 				&& _hashCode == other._hashCode
 				&& _interceptors.NullOrTrue(
-					other.Interceptors,
+					other._interceptors,
 					(x, y) => x.SequenceEqual(y));
 		}
+
+		public static bool operator ==(InterceptorProfile first, InterceptorProfile second) => first.Equals(second);
+
+		public static bool operator !=(InterceptorProfile first, InterceptorProfile second) => !first.Equals(second);
 	}
 }

@@ -19,7 +19,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
             var x = c.GetInstance<I1>();
             var y = c.GetAllInstances<I1>();
 
-            var registrar = new ServiceRegistrar(new SimpleInjectorRegistrarContract(c = new Container()));
+            var registrar = new ServiceRegistrar(new SimpleInjectorRegistrar(c = new Container()));
             var resolver = registrar
                 .Register(typeof(I1), typeof(C1))
                 .Register(typeof(I2), typeof(C2))
