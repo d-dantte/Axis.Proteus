@@ -1,11 +1,9 @@
-﻿using Axis.Proteus.IoC;
+﻿using Axis.Luna.Extensions;
+using Axis.Proteus.IoC;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimpleInjector;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Axis.Proteus.SimpleInjector.Test.Functional
 {
@@ -18,16 +16,17 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_1_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register(typeof(C_I1), RegistryScope.Transient);
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(C_I1)));
+            registrar
+                .Manifest()
+                [typeof(C_I1)]
+                .First()
+                .Consume(info => Assert.AreEqual(typeof(C_I1), info.ServiceType));
         }
         #endregion
 
@@ -37,16 +36,18 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_2_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register(typeof(I1), typeof(C_I1), RegistryScope.Transient);
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1), typeof(C_I1)));
+            registrar
+                .Manifest()
+                [typeof(I1)]
+                .First()
+                .Use(info => Assert.AreEqual(typeof(C_I1), info.Implementation.Type))
+                .Consume(info => Assert.AreEqual(typeof(I1), info.ServiceType));
         }
         #endregion
 
@@ -56,8 +57,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_3_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register(
@@ -66,9 +66,14 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
                 factory: new Func<IResolverContract, I1>(resolver => new C_I1()));
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1)));
+            registrar
+                .Manifest()
+                [typeof(I1)]
+                .First()
+                .Use(info => Assert.AreEqual(typeof(I1), info.ServiceType))
+                .Use(info => Assert.AreEqual(typeof(I1), info.Implementation.Type))
+                .Consume(info =>
+                    Assert.IsNotNull((info.Implementation as IBoundImplementation.ImplFactory).Factory as Func<I1>));
         }
         #endregion
 
@@ -78,16 +83,18 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_4_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register<C_I1>(RegistryScope.Transient);
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(C_I1)));
+            registrar
+                .Manifest()
+                [typeof(C_I1)]
+                .First()
+                .Use(info => Assert.AreEqual(typeof(C_I1), info.ServiceType))
+                .Consume(info => Assert.AreEqual(typeof(C_I1), info.Implementation.Type));
         }
         #endregion
 
@@ -97,16 +104,18 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_5_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register<I1, C_I1>(RegistryScope.Transient);
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1), typeof(C_I1)));
+            registrar
+                .Manifest()
+                [typeof(I1)]
+                .First()
+                .Use(info => Assert.AreEqual(typeof(C_I1), info.Implementation.Type))
+                .Consume(info => Assert.AreEqual(typeof(I1), info.ServiceType));
         }
         #endregion
 
@@ -116,8 +125,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
         public void Register_6_WithValidArgs_RegistersService()
         {
             // setup
-            var container = new Container();
-            var registrar = new SimpleInjectorRegistrar(container);
+            var registrar = new SimpleInjectorRegistrar();
 
             // test
             _ = registrar.Register<I1>(
@@ -125,9 +133,14 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
                 factory: resolver => new C_I1());
 
             // assert
-            container.Verify();
-            var registrations = container.ExtractRootRegistrations();
-            Assert.IsTrue(registrations.ContainsRegistration(typeof(I1)));
+            registrar
+                .Manifest()
+                [typeof(I1)]
+                .First()
+                .Use(info => Assert.AreEqual(typeof(I1), info.ServiceType))
+                .Use(info => Assert.AreEqual(typeof(I1), info.Implementation.Type))
+                .Consume(info =>
+                    Assert.IsNotNull((info.Implementation as IBoundImplementation.ImplFactory).Factory as Func<I1>));
         }
         #endregion
 

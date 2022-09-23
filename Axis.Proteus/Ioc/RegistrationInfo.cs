@@ -1,4 +1,5 @@
-﻿using Axis.Proteus.Interception;
+﻿using Axis.Luna.Extensions;
+using Axis.Proteus.Interception;
 using System;
 
 namespace Axis.Proteus.IoC
@@ -50,8 +51,8 @@ namespace Axis.Proteus.IoC
         public override bool Equals(object obj)
         {
             return obj is RegistrationInfo other
-                && other.ServiceType.Equals(ServiceType)
-                && other.Implementation.Equals(Implementation)
+                && other.ServiceType.NullOrEquals(ServiceType)
+                && other.Implementation.NullOrEquals(Implementation)
                 && other.Scope.Equals(Scope)
                 && other.Profile.Equals(Profile);
         }

@@ -14,7 +14,7 @@ namespace Axis.Proteus.IoC
         {
         }
 
-        public RegistryManifest(Dictionary<Type, IEnumerable<RegistrationInfo>> manifest)
+        public RegistryManifest(IDictionary<Type, IEnumerable<RegistrationInfo>> manifest)
             : this(manifest.Values.SelectMany())
         {
         }
@@ -44,6 +44,29 @@ namespace Axis.Proteus.IoC
                 .Add(registration);
 
             return this;
+        }
+
+        public static implicit operator RegistryManifest(
+            Dictionary<Type, IEnumerable<RegistrationInfo>> manifest)
+        {
+            return new RegistryManifest(manifest);
+        }
+
+        public static implicit operator RegistryManifest(
+            Dictionary<Type, List<RegistrationInfo>> manifest)
+        {
+            return new RegistryManifest(manifest.Values.SelectMany());
+        }
+
+        public static implicit operator RegistryManifest(
+            Dictionary<Type, RegistrationInfo[]> manifest)
+        {
+            return new RegistryManifest(manifest.Values.SelectMany());
+        }
+
+        public static implicit operator RegistryManifest(RegistrationInfo[] manifest)
+        {
+            return new RegistryManifest(manifest);
         }
     }
 }

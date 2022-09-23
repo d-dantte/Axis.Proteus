@@ -1,5 +1,6 @@
 ﻿using Axis.Luna.Extensions;
-using Axis.Proteus.IoC2;
+using Axis.Proteus;
+using Axis.Proteus.IoC;
 using Castle.DynamicProxy;
 using SimpleInjector;
 using System;
@@ -7,18 +8,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace Axis.Proteus.SimpleInjector.IoC2
+namespace Axis.Proteus.SimpleInjector
 {
     public class SimpleInjectorResolver : IResolverContract
     {
         private readonly Container _container;
         private readonly IProxyGenerator _proxyGenerator;
-        private readonly IoC.RegistryManifest _manifest;
+        private readonly RegistryManifest _manifest;
 
         public SimpleInjectorResolver(
             Container container,
             IProxyGenerator proxyGenerator,
-            IoC.RegistryManifest manifest)
+            RegistryManifest manifest)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
             _proxyGenerator = proxyGenerator ?? throw new ArgumentNullException(nameof(proxyGenerator));
@@ -27,12 +28,12 @@ namespace Axis.Proteus.SimpleInjector.IoC2
 
         public void Dispose() => _container.Dispose();
 
-        public ReadOnlyDictionary<Type, IoC.RegistrationInfo[]> Manifest()
+        public ReadOnlyDictionary<Type, RegistrationInfo[]> Manifest()
             => _manifest
                 .Registrations()
                 .GroupBy(info => info.ServiceType)
                 .ToDictionary(group => group.Key, group => group.ToArray())
-                .ApplyTo(dict => new ReadOnlyDictionary<Type, IoC.RegistrationInfo[]>(dict));
+                .ApplyTo(dict => new ReadOnlyDictionary<Type, RegistrationInfo[]>(dict));
 
         public Service Resolve<Service>()
             where Service : class
@@ -59,6 +60,14 @@ namespace Axis.Proteus.SimpleInjector.IoC2
 
                     if (info.Profile == default)
                         return instance;
+
+                    if (info.Implementation is IBoundImplementation.ImplType implType
+                        && implType.Type != instance.GetType())
+                        throw new InvalidOperationException($"Registration mis-match: registration type: {info.Implementation.Type}, resolved type: {instance.GetType()}");
+
+                    else if(info.Implementation is IBoundImplementation.ImplFactory implFactory
+                        && !implFactory.Type.IsAssignableFrom(instance.GetType()))
+                        throw new InvalidOperationException($"Registration mis-match: registration type: {info.Implementation.Type}, resolved type: {instance.GetType()}");
 
                     return typeof(Service).IsClass
                         ? _proxyGenerator

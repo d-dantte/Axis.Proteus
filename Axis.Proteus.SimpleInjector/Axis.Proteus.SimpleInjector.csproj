@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>6.1.1.0</AssemblyVersion>
     <FileVersion>6.0.0.0</FileVersion>
-    <Version>6.2.1</Version>
+    <Version>7.0.0</Version>
     <RootNamespace>Axis.Proteus.SimpleInjector</RootNamespace>
     <AssemblyName>Axis.Proteus.SimpleInjector</AssemblyName>
     <Description>Simple Injector Implementation of the Axis.Proteus Ioc Registration and Resolution contract interfaces.</Description>
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Axis.Luna.Extensions" Version="6.0.0" />
+    <PackageReference Include="Axis.Luna.Extensions" Version="6.0.1" />
     <PackageReference Include="Axis.Luna.FInvoke" Version="6.0.0" />
     <PackageReference Include="SimpleInjector" Version="5.4.0" />
   </ItemGroup>

@@ -1,20 +1,20 @@
-﻿using Axis.Proteus.Exceptions;
-using Axis.Proteus.Interception;
+﻿using Axis.Proteus.Interception;
 using Axis.Proteus.IoC;
 using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SimpleInjector;
 using System;
 using System.Linq;
 
-namespace Axis.Proteus.Test.IoC
+namespace Axis.Proteus.SimpleInjector.Test.Unit
 {
     [TestClass]
-	public class ServiceRegistrarTest
+	public class SimpleInjectorServiceRegistrarTest
 	{
-		private Mock<IRegistrarContract> _registrarMock = new Mock<IRegistrarContract>();
+		private Mock<IProxyGenerator> _mockProxyGenerator = new Mock<IProxyGenerator>();
 
-		public ServiceRegistrarTest()
+		public SimpleInjectorServiceRegistrarTest()
 		{
 			//setup mock
 		}
@@ -24,12 +24,13 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_1_WithValidServiceType_ShouldAddRegistration()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(
+				new Container(),
+				_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.RegistrationsFor(typeof(C_I1));
 
 			Assert.IsNotNull(registrations);
@@ -43,7 +44,9 @@ namespace Axis.Proteus.Test.IoC
 			Assert.AreEqual(default, info.Profile);
 
 			// test
-			registrar = new ServiceRegistrar(_registrarMock.Object);
+			registrar = new SimpleInjectorRegistrar(
+				new Container(),
+				_mockProxyGenerator.Object);
 			var profile = new InterceptorProfile(new DummyInterceptor());
 			registrations = registrar
 				.Register(
@@ -68,28 +71,25 @@ namespace Axis.Proteus.Test.IoC
 			// nothing to setup
 
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			Assert.ThrowsException<ArgumentNullException>(
 				() => registrar.Register(
 					null,
-					RegistryScope.Transient,
-					null));
+					RegistryScope.Transient));
 		}
 
 		[TestMethod]
 		public void Register_1_WithDuplicateRegistration_ShouldAddRegistration()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.Register(
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.RegistrationsFor(typeof(C_I1))
 				.ToArray();
 
@@ -104,13 +104,12 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_2_WithValidServiceType_ShouldAddRegistration()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					typeof(I1),
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.RegistrationsFor(typeof(I1));
 
 			Assert.IsNotNull(registrations);
@@ -128,38 +127,34 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_2_WithNullTypes_ShouldThrowException()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			Assert.ThrowsException<ArgumentNullException>(
 				() => registrar.Register(
 					null,
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null));
+					RegistryScope.Transient));
 
 			Assert.ThrowsException<ArgumentNullException>(
 				() => registrar.Register(
 					typeof(I1),
 					(Type)null,
-					RegistryScope.Transient,
-					null));
+					RegistryScope.Transient));
 		}
 
 		[TestMethod]
 		public void Register_2_WithDuplicateRegistration_ShouldThrowException()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					typeof(I1),
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.Register(
 					typeof(I1),
 					typeof(C_I1),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.RegistrationsFor(typeof(I1))
 				.ToArray();
 
@@ -174,13 +169,12 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_3_WithValidArgs_ShouldRegister()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					typeof(I1),
 					new Func<IResolverContract, I1>(_r => new C_I1()),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.Register(
 					typeof(I1),
 					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
@@ -199,9 +193,9 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_4_WithValidServiceType_ShouldRegister()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
-				.Register<C_I1>(RegistryScope.Transient, null)
+				.Register<C_I1>(RegistryScope.Transient)
 				.RegistrationsFor(typeof(C_I1));
 
 			Assert.IsNotNull(registrations);
@@ -215,7 +209,7 @@ namespace Axis.Proteus.Test.IoC
 			Assert.AreEqual(default, info.Profile);
 
 			// test
-			registrar = new ServiceRegistrar(_registrarMock.Object);
+			registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var profile = new InterceptorProfile(new DummyInterceptor());
 			registrations = registrar
 				.Register<C_I1>(RegistryScope.Transient, profile)
@@ -235,10 +229,10 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_4_WithDuplicateRegistration_ShouldAddRegistration()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
-				.Register<C_I1>(RegistryScope.Transient, null)
-				.Register<C_I1>(RegistryScope.Transient, null)
+				.Register<C_I1>(RegistryScope.Transient)
+				.Register<C_I1>(RegistryScope.Transient)
 				.RegistrationsFor(typeof(C_I1))
 				.ToArray();
 
@@ -252,9 +246,9 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_5_WithValidServiceType_ShouldRegister()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
-				.Register<I1, C_I1>(RegistryScope.Transient, null)
+				.Register<I1, C_I1>(RegistryScope.Transient, default)
 				.RegistrationsFor(typeof(I1));
 
 			Assert.IsNotNull(registrations);
@@ -268,7 +262,7 @@ namespace Axis.Proteus.Test.IoC
 			Assert.AreEqual(default, info.Profile);
 
 			// test
-			registrar = new ServiceRegistrar(_registrarMock.Object);
+			registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var profile = new InterceptorProfile(new DummyInterceptor());
 			registrations = registrar
 				.Register<I1, C_I1>(RegistryScope.Transient, profile)
@@ -291,12 +285,11 @@ namespace Axis.Proteus.Test.IoC
 		public void Register_6_WithValidArgs_ShouldRegister()
 		{
 			// test
-			var registrar = new ServiceRegistrar(_registrarMock.Object);
+			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
 			var registrations = registrar
 				.Register(
 					new Func<IResolverContract, I1>(_r => new C_I1()),
-					RegistryScope.Transient,
-					null)
+					RegistryScope.Transient)
 				.Register(
 					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
 					RegistryScope.Singleton,

@@ -3,6 +3,7 @@ using Axis.Proteus.IoC;
 using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimpleInjector;
+using System;
 using System.Collections.Generic;
 
 namespace Axis.Proteus.SimpleInjector.Test.Functional
@@ -16,10 +17,9 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             #region non-generics
             //register self-bound service
             var container = new Container();
-            IRegistrarContract registrarContract = new SimpleInjectorRegistrar(container);
-            var publicRegistrar = new ServiceRegistrar(registrarContract);
+            IRegistrarContract publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(typeof(C1_I1), RegistryScope.Transient);
-            ServiceResolver resolver = publicRegistrar.BuildResolver();
+            IResolverContract resolver = publicRegistrar.BuildResolver();
 
             var service = resolver.Resolve(typeof(C1_I1));
             Assert.IsNotNull(service);
@@ -33,8 +33,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
 
             //register interface-bound service
             container = new Container();
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(typeof(I1), typeof(C1_I1), RegistryScope.Transient);
             resolver = publicRegistrar.BuildResolver();
 
@@ -50,13 +49,12 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
 
             //register interface-bound factory-generated service
             container = new Container();
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(
                 serviceType: typeof(I1),
                 scope: RegistryScope.Transient,
-                interceptorProfile: null,
-                factory: _resolver => new C1_I1());
+                profile: default,
+                factory: new Func<IResolverContract,I1>(_resolver => new C1_I1()));
             resolver = publicRegistrar.BuildResolver();
 
             service = resolver.Resolve(typeof(I1));
@@ -72,8 +70,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             #region generics
             //register self-bound service
             container = new Container();
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<C1_I1>(RegistryScope.Transient);
             resolver = publicRegistrar.BuildResolver();
 
@@ -89,8 +86,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
 
             //register interface-bound service
             container = new Container();
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<I1, C1_I1>(RegistryScope.Transient);
             resolver = publicRegistrar.BuildResolver();
 
@@ -106,11 +102,10 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
 
             //register interface-bound factory-generated service
             container = new Container();
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<I1>(
                 scope: RegistryScope.Transient,
-                interceptorProfile: null,
+                profile: default,
                 factory: _resolver => new C1_I1());
             resolver = publicRegistrar.BuildResolver();
 
@@ -133,10 +128,9 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register self-bound service
             var container = new Container();
             InterceptorProfile profile = new InterceptorProfile(i = new Interceptor());
-            IRegistrarContract registrarContract = new SimpleInjectorRegistrar(container);
-            var publicRegistrar = new ServiceRegistrar(registrarContract);
+            IRegistrarContract publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(typeof(C1_I1), RegistryScope.Transient, profile);
-            ServiceResolver resolver = publicRegistrar.BuildResolver();
+            IResolverContract resolver = publicRegistrar.BuildResolver();
 
             var service = resolver.Resolve(typeof(C1_I1));
             Assert.IsNotNull(service);
@@ -153,8 +147,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register interface-bound service
             container = new Container();
             profile = new InterceptorProfile(i = new Interceptor());
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(typeof(I1), typeof(C1_I1), RegistryScope.Transient, profile);
             resolver = publicRegistrar.BuildResolver();
 
@@ -173,13 +166,12 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register interface-bound factory-generated service
             container = new Container();
             profile = new InterceptorProfile(i = new Interceptor());
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register(
                 serviceType: typeof(I1),
                 scope: RegistryScope.Transient,
-                interceptorProfile: profile,
-                factory: _resolver => new C1_I1());
+                profile: profile,
+                factory: new Func<IResolverContract, I1>(_resolver => new C1_I1()));
             resolver = publicRegistrar.BuildResolver();
 
             service = resolver.Resolve(typeof(I1));
@@ -198,8 +190,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register self-bound service
             container = new Container();
             profile = new InterceptorProfile(i = new Interceptor());
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<C1_I1>(RegistryScope.Transient, profile);
             resolver = publicRegistrar.BuildResolver();
 
@@ -218,8 +209,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register interface-bound service
             container = new Container();
             profile = new InterceptorProfile(i = new Interceptor());
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<I1, C1_I1>(RegistryScope.Transient, profile);
             resolver = publicRegistrar.BuildResolver();
 
@@ -238,11 +228,10 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
             //register interface-bound factory-generated service
             container = new Container();
             profile = new InterceptorProfile(i = new Interceptor());
-            registrarContract = new SimpleInjectorRegistrar(container);
-            publicRegistrar = new ServiceRegistrar(registrarContract);
+            publicRegistrar = new SimpleInjectorRegistrar(container);
             _ = publicRegistrar.Register<I1>(
                 scope: RegistryScope.Transient,
-                interceptorProfile: profile,
+                profile: profile,
                 factory: _resolver => new C1_I1());
             resolver = publicRegistrar.BuildResolver();
 

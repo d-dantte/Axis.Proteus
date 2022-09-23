@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Axis.Proteus.IoC
 {
@@ -13,7 +14,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <typeparam name="Service">The type of the service to be resovled</typeparam>
         /// <returns>The resolved service, or null if it was not registered</returns>
-        Service Resolve<Service>() where Service: class;
+        Service Resolve<Service>() where Service : class;
 
         /// <summary>
         /// Resolve one instance of the specified service - guaranteed to be the first implementation to be registered.
@@ -27,7 +28,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         /// <typeparam name="Service">The service to be resolved</typeparam>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
-        IEnumerable<Service> ResolveAll<Service>() where Service: class;
+        IEnumerable<Service> ResolveAll<Service>() where Service : class;
 
         /// <summary>
         /// Resolves a collection of instances registered for a service
@@ -35,5 +36,11 @@ namespace Axis.Proteus.IoC
         /// <param name="serviceType">The service to be resolved</param>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>
         IEnumerable<object> ResolveAll(Type serviceType);
+
+        /// <summary>
+        /// Retrieves a list of all registrations that can be resolved by this resolver
+        /// </summary>
+        /// <returns></returns>
+        ReadOnlyDictionary<Type, RegistrationInfo[]> Manifest();
     }
 }

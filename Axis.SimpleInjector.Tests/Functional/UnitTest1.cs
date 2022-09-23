@@ -63,4 +63,6 @@ namespace Axis.SimpleInjector.Tests.Functional
             container.Verify();
         }
     }
+
+    public class A { }
 }

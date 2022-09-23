@@ -5,3 +5,20 @@
    ps: 'stacking' registrations means i can register 'IService1' to multiple implementations, and also have the same implementation registered
    to multiple services. All of which can be achieved by repeatedly calling the 'Register' method with the appropriate parameter.
 2. Following #1 above, resolving types will always use Container.GetAllInstances as the base, and filter out instances from what is returned.
+
+2022/09/22 =====================================================================
+
+ 1. Revert the registration implementation to using Container.Register, rather than Container.Collection.Register. This is to ensure that
+	actual collection registrations can be separated from regular registrations. The implication of this is as follows:
+	1. Resolve will now revert to using Container.GetInstance
+	2. ResolveAll will use Container.GetAllInstances because IRegistrarContract.RegisterAll will use Container.Collection.Append
+	3. Registrations are no longer stackable
+
+ 2. Possible future feature: support contextual/conditional registration. Rather than use an InjectorContext that provides only Injection-target
+    info (like simpleInjector),  we will pass in a context that can take 3 different forms
+	1. MethodParamInjection - this translates to that of SimpleInjector. Since it's translatable, it will be a one-to-one implementation in SimpleInjector
+	2. PropertyInjection - this also translates to that of SimpleInjector. Same as above.
+	3. NamedInjection - this is a name that, when supplied to the IResolverContract along with the intended service type, will retrieve the
+	   specific implementation that was mapped to that named injection context. This can be implemented as using a dynamically created class with a
+	   single contstuctor, taking the given implementation(s). This dynamically created class is what will be registered in SimpleInjector, while
+	   the IRegristrarContract's manifest will maintain information about the NamedInjection. 

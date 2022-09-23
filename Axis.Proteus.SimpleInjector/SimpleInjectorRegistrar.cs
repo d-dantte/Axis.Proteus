@@ -11,9 +11,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Axis.Proteus.SimpleInjector.IoC2
+namespace Axis.Proteus.SimpleInjector
 {
-    public class SimpleInjectorRegistrar : Proteus.IoC2.IRegistrarContract
+    public class SimpleInjectorRegistrar : IRegistrarContract
     {
         private static readonly MethodInfo _registerFactoryMethod = GetRegisterFactoryMethod();
         private static readonly MethodInfo _containerAppendFactoryMethod = GetContainerAppendFactoryMethod();
@@ -21,7 +21,7 @@ namespace Axis.Proteus.SimpleInjector.IoC2
         private readonly RegistryManifest _manifest = new RegistryManifest();
         private readonly Container _container;
         private readonly IProxyGenerator _proxyGenerator;
-        private Proteus.IoC2.IResolverContract _resolverContract;
+        private IResolverContract _resolverContract;
 
         #region constructor
         public SimpleInjectorRegistrar(Container container, IProxyGenerator proxyGenerator)
@@ -31,19 +31,19 @@ namespace Axis.Proteus.SimpleInjector.IoC2
         }
 
         public SimpleInjectorRegistrar(Container container)
-            :this (container, new ProxyGenerator())
+            : this(container, new ProxyGenerator())
         {
         }
 
         public SimpleInjectorRegistrar()
-            :this (new Container(), new ProxyGenerator())
+            : this(new Container(), new ProxyGenerator())
         {
         }
         #endregion
 
 
         #region IRegistrarContract
-        public Proteus.IoC2.IResolverContract BuildResolver()
+        public IResolverContract BuildResolver()
         {
             if (IsRegistrationClosed())
                 return _resolverContract ?? throw new InvalidOperationException("The resolver is not yet initialized");
@@ -74,14 +74,16 @@ namespace Axis.Proteus.SimpleInjector.IoC2
 
             // register the IResolverContract on the container. Note that duplicate registrations should fail
             // as there should be only one such registration on this container.
-            _container.RegisterInstance<Proteus.IoC2.IResolverContract>(
+            _container.RegisterInstance<IResolverContract>(
                 new SimpleInjectorResolver(
                     _container,
                     _proxyGenerator,
                     _manifest));
 
+            _container.Verify();
+
             // resolve the IResolverContract, effectively locking the container.
-            return _resolverContract = _container.GetInstance<Proteus.IoC2.IResolverContract>();
+            return _resolverContract = _container.GetInstance<IResolverContract>();
         }
 
         public bool IsRegistrationClosed() => _container.IsLocked;
@@ -93,15 +95,15 @@ namespace Axis.Proteus.SimpleInjector.IoC2
                 .ToDictionary(group => group.Key, group => group.ToArray())
                 .ApplyTo(dict => new ReadOnlyDictionary<Type, RegistrationInfo[]>(dict));
 
-        public Proteus.IoC2.IRegistrarContract Register<Impl>(
+        public IRegistrarContract Register<Impl>(
             RegistryScope scope = default,
             InterceptorProfile profile = default)
             where Impl : class
             => Register<Impl, Impl>(scope, profile);
 
-        public Proteus.IoC2.IRegistrarContract Register<Service, Impl>(
-            RegistryScope scope,
-            InterceptorProfile profile)
+        public IRegistrarContract Register<Service, Impl>(
+            RegistryScope scope = default,
+            InterceptorProfile profile = default)
             where Service : class
             where Impl : class, Service
         {
@@ -112,7 +114,7 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             var implType = typeof(Impl);
             _manifest.AddRegistration(
                 new RegistrationInfo(
-                    serviceType, 
+                    serviceType,
                     IBoundImplementation.Of(implType),
                     scope,
                     profile));
@@ -120,8 +122,8 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             return this;
         }
 
-        public Proteus.IoC2.IRegistrarContract Register<Service>(
-            Func<Proteus.IoC2.IResolverContract, Service> factory,
+        public IRegistrarContract Register<Service>(
+            Func<IResolverContract, Service> factory,
             RegistryScope scope = default,
             InterceptorProfile profile = default)
             where Service : class
@@ -129,7 +131,8 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             if (IsRegistrationClosed())
                 throw new InvalidOperationException("The registry is locked to further registrations");
 
-            Func<Service> resolvedFactory = () => factory.Invoke(_resolverContract);
+            Func<Service> resolvedFactory = () => 
+                factory.Invoke(_container.GetInstance<IResolverContract>());
             var serviceType = typeof(Service);
             _manifest.AddRegistration(
                 new RegistrationInfo(
@@ -141,13 +144,13 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             return this;
         }
 
-        public Proteus.IoC2.IRegistrarContract Register(
+        public IRegistrarContract Register(
             Type serviceType,
             RegistryScope scope = default,
             InterceptorProfile profile = default)
             => Register(serviceType, serviceType, scope, profile);
 
-        public Proteus.IoC2.IRegistrarContract Register(
+        public IRegistrarContract Register(
             Type serviceType,
             Type concreteType,
             RegistryScope scope = default,
@@ -163,7 +166,7 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             return this;
         }
 
-        public Proteus.IoC2.IRegistrarContract Register(
+        public IRegistrarContract Register(
             Type serviceType,
             Delegate factory,
             RegistryScope scope = default,
@@ -171,18 +174,18 @@ namespace Axis.Proteus.SimpleInjector.IoC2
             => _registerFactoryMethod
                 .MakeGenericMethod(serviceType)
                 .ApplyTo(method => this.InvokeFunc(method, factory, scope, profile))
-                .As<Proteus.IoC2.IRegistrarContract>();
+                .As<IRegistrarContract>();
         #endregion
 
         #region Method Access
         public static MethodInfo GetRegisterFactoryMethod()
         {
-            Proteus.IoC2.IRegistrarContract contract = null;
+            SimpleInjectorRegistrar contract = null;
             Expression<Func<
-                Func<Proteus.IoC2.IResolverContract, IEnumerable<int>>,
+                Func<IResolverContract, IEnumerable<int>>,
                 RegistryScope,
                 InterceptorProfile,
-                Proteus.IoC2.IRegistrarContract>> expression = (f, a, b) => contract.Register(f, a, b);
+                IRegistrarContract>> expression = (f, a, b) => contract.Register(f, a, b);
             return (expression.Body as MethodCallExpression).Method.GetGenericMethodDefinition();
         }
 
