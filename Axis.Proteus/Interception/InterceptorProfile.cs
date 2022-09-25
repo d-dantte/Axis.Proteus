@@ -20,7 +20,7 @@ namespace Axis.Proteus.Interception
 		/// <summary>
 		/// A sequence of interceptor instances, in a specific order, to be registered for services
 		/// </summary>
-		public IEnumerable<IInterceptor> Interceptors => _interceptors ?? new IInterceptor[0];
+		public IEnumerable<IInterceptor> Interceptors => _interceptors.AsEnumerable() ?? Enumerable.Empty<IInterceptor>();
 
 		public InterceptorProfile(IEnumerable<IInterceptor> interceptors)
 		{
@@ -54,7 +54,7 @@ namespace Axis.Proteus.Interception
 				&& _hashCode == other._hashCode
 				&& _interceptors.NullOrTrue(
 					other._interceptors,
-					(x, y) => x.SequenceEqual(y));
+					Enumerable.SequenceEqual);
 		}
 
 		public static bool operator ==(InterceptorProfile first, InterceptorProfile second) => first.Equals(second);

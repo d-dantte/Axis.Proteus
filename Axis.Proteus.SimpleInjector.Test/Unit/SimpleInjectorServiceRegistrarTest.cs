@@ -36,7 +36,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			var info = registrations.First();
 			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			var implT = info.Implementation as IBoundImplementation.ImplType;
+			var implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -58,7 +58,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			info = registrations.First();
 			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			implT = info.Implementation as IBoundImplementation.ImplType;
+			implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -115,7 +115,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			var info = registrations.First();
 			Assert.AreEqual(typeof(I1), info.ServiceType);
-			var implT = info.Implementation as IBoundImplementation.ImplType;
+			var implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -201,7 +201,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			var info = registrations.First();
 			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			var implT = info.Implementation as IBoundImplementation.ImplType;
+			var implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -218,7 +218,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			info = registrations.First();
 			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			implT = info.Implementation as IBoundImplementation.ImplType;
+			implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -254,7 +254,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			var info = registrations.First();
 			Assert.AreEqual(typeof(I1), info.ServiceType);
-			var implT = info.Implementation as IBoundImplementation.ImplType;
+			var implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);
@@ -271,7 +271,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			Assert.IsNotNull(registrations);
 			info = registrations.First();
 			Assert.AreEqual(typeof(I1), info.ServiceType);
-			implT = info.Implementation as IBoundImplementation.ImplType;
+			implT = info.Implementation as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1), implT.Type);
 			Assert.AreEqual(RegistryScope.Transient, info.Scope);

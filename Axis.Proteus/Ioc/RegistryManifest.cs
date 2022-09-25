@@ -1,4 +1,5 @@
 ﻿using Axis.Luna.Extensions;
+using Axis.Proteus.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,66 +8,101 @@ namespace Axis.Proteus.IoC
 {
     public class RegistryManifest
     {
-        private readonly Dictionary<Type, List<RegistrationInfo>> _manifest = new Dictionary<Type, List<RegistrationInfo>>();
+        private readonly Dictionary<Type, List<RegistrationInfo>> _collectionManifest = new Dictionary<Type, List<RegistrationInfo>>();
+
+        private readonly Dictionary<Type, RegistrationInfo> _rootManifest = new Dictionary<Type, RegistrationInfo>();
 
         #region Construction
         public RegistryManifest()
         {
         }
-
-        public RegistryManifest(IDictionary<Type, IEnumerable<RegistrationInfo>> manifest)
-            : this(manifest.Values.SelectMany())
-        {
-        }
-
-        public RegistryManifest(IEnumerable<RegistrationInfo> flatManifest)
-        {
-            flatManifest
-                .ThrowIfNull(new ArgumentNullException(nameof(flatManifest)))
-                .ForAll(info => AddRegistration(info));
-        }
         #endregion
 
+        #region Collections
+        /// <summary>
+        /// Gets all the Collection types registered in this manifest
+        /// </summary>
+        public Type[] CollectionServices() => _collectionManifest.Keys.ToArray();
 
-        public Type[] ServiceTypes() => _manifest.Keys.ToArray();
+        /// <summary>
+        /// Gets all the <see cref="RegistrationInfo"/> instances registered against the given collection service type. Returns null if non have been registered
+        /// </summary>
+        /// <param name="collectionServiceType">The collection type</param>
+        public RegistrationInfo[] CollectionRegistrationsFor(Type collectionServiceType)
+            => _collectionManifest.TryGetValue(collectionServiceType, out var registrations)
+                ? registrations.ToArray()
+                : null;
 
-        public RegistrationInfo[] Registrations() => _manifest.Values.SelectMany().ToArray();
+        /// <summary>
+        /// Indicates if the given collection service type has been registered in this manifest
+        /// </summary>
+        /// <param name="collectionServiceType">The collection type</param>
+        public bool HasCollectionRegistrations(Type collectionServiceType) => _collectionManifest.ContainsKey(collectionServiceType);
 
-        public RegistrationInfo[] RegistrationsFor(Type serviceType) => _manifest.GetOrDefault(serviceType)?.ToArray();
-
-        public RegistrationInfo[] RegistrationsFor<Service>() => RegistrationsFor(typeof(Service));
-
-
-        public RegistryManifest AddRegistration(RegistrationInfo registration)
+        /// <summary>
+        /// Appends a new <see cref="RegistrationInfo"/> instance to the manifest. Duplicates are allowed.
+        /// </summary>
+        /// <param name="registrations">The registration info list</param>
+        public RegistryManifest AddCollectionRegistrations(params RegistrationInfo[] registrations)
         {
-            _manifest
-                .GetOrAdd(registration.ServiceType, _ => new List<RegistrationInfo>())
-                .Add(registration);
+            registrations?
+                .ThrowIf(ContainsDefault, new ArgumentException($"Invalid registration detected"))
+                .ForAll(registration =>
+                {
+                    _collectionManifest
+                        .GetOrAdd(
+                            registration.ServiceType,
+                            _ => new List<RegistrationInfo>())
+                        .Add(registration);
+                });
 
             return this;
         }
 
-        public static implicit operator RegistryManifest(
-            Dictionary<Type, IEnumerable<RegistrationInfo>> manifest)
+        #endregion
+
+        #region Root
+        /// <summary>
+        /// Gets all the root service types registered in this manifest
+        /// </summary>
+        public Type[] RootServices() => _rootManifest.Keys.ToArray();
+
+
+        /// <summary>
+        /// Gets the <see cref="RegistrationInfo"/> instance registered against the given root service type. Returns null if non have been registered
+        /// </summary>
+        /// <param name="rootServiceType">The root type</param>
+        public RegistrationInfo? RootRegistrationFor(Type rootServiceType)
+            => _rootManifest.TryGetValue(rootServiceType, out var registration)
+                ? registration
+                : (RegistrationInfo?) null;
+
+
+        /// <summary>
+        /// Indicates if the given root service type has been registered in this manifest
+        /// </summary>
+        /// <param name="rootServiceType">The collection type</param>
+        public bool HasRootRegistration(Type rootServiceType) => _rootManifest.ContainsKey(rootServiceType);
+
+        /// <summary>
+        /// Adds a new <see cref="RegistrationInfo"/> instance to the manifest. Duplicates are not allowed.
+        /// </summary>
+        /// <param name="registration">The registration instance</param>
+        /// <exception cref="DuplicateRegistrationException"></exception>
+        public RegistryManifest AddRootRegistration(RegistrationInfo registration)
         {
-            return new RegistryManifest(manifest);
+            if (registration == default)
+                throw new ArgumentException($"Invalid registration supplied: {registration}");
+
+            if (!_rootManifest.TryAdd(registration.ServiceType, registration))
+                throw new DuplicateRegistrationException(registration.ServiceType);
+
+            return this;
         }
 
-        public static implicit operator RegistryManifest(
-            Dictionary<Type, List<RegistrationInfo>> manifest)
-        {
-            return new RegistryManifest(manifest.Values.SelectMany());
-        }
+        #endregion
 
-        public static implicit operator RegistryManifest(
-            Dictionary<Type, RegistrationInfo[]> manifest)
-        {
-            return new RegistryManifest(manifest.Values.SelectMany());
-        }
-
-        public static implicit operator RegistryManifest(RegistrationInfo[] manifest)
-        {
-            return new RegistryManifest(manifest);
-        }
+        private static bool ContainsDefault(IEnumerable<RegistrationInfo> registrations)
+            => registrations.Any(registration => default == registration);
     }
 }

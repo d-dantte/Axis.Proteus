@@ -58,5 +58,8 @@ namespace Axis.Proteus.IoC
         public static implicit operator string(RegistryScope scope) => scope.Name;
 
         public static implicit operator RegistryScope(string scope) => new RegistryScope(scope);
+
+        public static bool operator ==(RegistryScope first, RegistryScope second) => first.Equals(second);
+        public static bool operator !=(RegistryScope first, RegistryScope second) => !first.Equals(second);
     }
 }

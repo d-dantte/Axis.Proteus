@@ -62,7 +62,75 @@ namespace Axis.SimpleInjector.Tests.Functional
             Assert.ThrowsException<InvalidOperationException>(() => container.Register<Impl1>());
             container.Verify();
         }
+
+
+        [TestMethod]
+        public void CollectionTests()
+        {
+            Container container = new Container();
+
+            container.Collection.Append<A>(() => new A(1), Lifestyle.Transient);
+            container.Collection.Append<A>(() => new A(2), Lifestyle.Transient);
+            container.Collection.Append<A>(() => new A(3), Lifestyle.Transient);
+
+            var instances = container.GetAllInstances<A>();
+            Assert.IsTrue(new[] { 1, 2, 3 }.SequenceEqual(instances.Select(a => a.Id)));
+        }
+
+        [TestMethod]
+        public void FactoryRegistrationTest()
+        {
+            Container container = new Container();
+
+            Func<A> factory = () => new A(DateTime.Now.Millisecond);
+            var castedFactory = (Func<object>)factory; 
+            container.Register(typeof(A), factory);
+
+            var instance = container.GetInstance<A>();
+        }
+
+        [TestMethod]
+        public void ConditionalRegistrationTest()
+        {
+            Container container = new Container();
+
+            container.Register<Class1>();
+            container.RegisterConditional(
+                typeof(object),
+                typeof(Class2),
+                context =>
+                {
+                    return true;
+                });
+
+            var x = container.GetInstance<Class1>();
+        }
     }
 
-    public class A { }
+    public class A 
+    {
+        public int Id { get; set; }
+
+        public A(int id) => Id = id;
+    }
+
+    public interface I1 { }
+
+    public interface I2: I1 { }
+
+    public class X : I2 { }
+
+    public class Class1
+    {
+        public object Instance { get; }
+
+        public Class1(object bleh)
+        {
+            Instance = bleh;
+        }
+    }
+
+    public class Class2
+    {
+    }
 }

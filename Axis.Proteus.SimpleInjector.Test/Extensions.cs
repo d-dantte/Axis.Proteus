@@ -11,22 +11,6 @@ namespace Axis.Proteus.SimpleInjector.Test
 
     internal static class Extensions
     {
-        public static RegistrationInfo[] RegistrationsFor(this
-            IRegistrarContract registrarContract,
-            Type serviceType)
-        {
-            return registrarContract
-                .Manifest()
-                .GetOrDefault(serviceType);
-        }
-
-        public static int RegistrationCount(this IResolverContract resolverContract)
-        {
-            return resolverContract
-                .Manifest()
-                .Select(kvp => kvp.Value.Length)
-                .Sum();
-        }
 
         /// <summary>
         /// Flattens the result of <see cref="global::SimpleInjector.Container.GetRootRegistrations"/>.

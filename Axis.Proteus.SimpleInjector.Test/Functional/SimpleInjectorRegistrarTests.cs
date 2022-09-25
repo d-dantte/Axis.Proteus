@@ -73,7 +73,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
                 .Use(info => Assert.AreEqual(typeof(I1), info.ServiceType))
                 .Use(info => Assert.AreEqual(typeof(I1), info.Implementation.Type))
                 .Consume(info =>
-                    Assert.IsNotNull((info.Implementation as IBoundImplementation.ImplFactory).Factory as Func<I1>));
+                    Assert.IsNotNull((info.Implementation as IBindTarget.FactoryTarget).Factory as Func<I1>));
         }
         #endregion
 
@@ -140,7 +140,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
                 .Use(info => Assert.AreEqual(typeof(I1), info.ServiceType))
                 .Use(info => Assert.AreEqual(typeof(I1), info.Implementation.Type))
                 .Consume(info =>
-                    Assert.IsNotNull((info.Implementation as IBoundImplementation.ImplFactory).Factory as Func<I1>));
+                    Assert.IsNotNull((info.Implementation as IBindTarget.FactoryTarget).Factory as Func<I1>));
         }
         #endregion
 

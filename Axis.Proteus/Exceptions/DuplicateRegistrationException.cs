@@ -2,7 +2,6 @@
 
 namespace Axis.Proteus.Exceptions
 {
-    [Obsolete]
     public class DuplicateRegistrationException: Exception
     {
         public Type DuplicateType { get; }

@@ -1,20 +1,35 @@
 ﻿using Axis.Luna.Extensions;
 using Axis.Proteus.Interception;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Axis.Proteus.IoC
 {
     public readonly struct RegistrationInfo
     {
+        private readonly HashSet<IBindContext> _bindContexts;
+
         /// <summary>
         /// The service type
         /// </summary>
         public Type ServiceType { get; }
 
         /// <summary>
-        /// The implementation type
+        /// The default context. 
+        /// Note that the following will always throw an <c>InvalidOperationException</c>
+        /// <code>
+        /// defualt(<see cref="RegistrationInfo"/>).DefaultContext
+        /// </code>
         /// </summary>
-        public IBoundImplementation Implementation { get; }
+        public IBindContext.DefaultContext DefaultContext => 
+            _bindContexts?.FirstOrDefault().As<IBindContext.DefaultContext>()
+            ?? throw new InvalidOperationException($"The default {typeof(IBindContext)} is missing");
+
+        /// <summary>
+        /// All available <see cref="IBindContext"/> instances applicable to this registration
+        /// </summary>
+        public IBindContext[] BindContexts => _bindContexts?.ToArray();
 
         /// <summary>
         /// The scope
@@ -29,101 +44,50 @@ namespace Axis.Proteus.IoC
         public RegistrationInfo(
             Type implementationType,
             RegistryScope scope = default,
-            InterceptorProfile profile = default)
-            : this(implementationType, IBoundImplementation.Of(implementationType), scope, profile)
+            InterceptorProfile profile = default,
+            params IBindContext[] bindContexts)
+            : this(implementationType, IBindTarget.Of(implementationType), scope, profile, bindContexts)
         {
         }
 
         public RegistrationInfo(
             Type serviceType,
-            IBoundImplementation implementationType,
+            IBindTarget target,
             RegistryScope scope = default,
-            InterceptorProfile profile = default)
+            InterceptorProfile profile = default,
+            params IBindContext[] bindContexts)
         {
             ServiceType = serviceType ?? throw new ArgumentNullException(nameof(serviceType));
-            Implementation = implementationType ?? throw new ArgumentNullException(nameof(implementationType));
             Scope = scope;
             Profile = profile;
+            _bindContexts = new HashSet<IBindContext>() { IBindContext.Of(target) };
+
+            if (ContainsDefaultContext(bindContexts))
+                throw new ArgumentException($"Supplied contexts MUST not contain a {typeof(IBindContext.DefaultContext)} instance.");
+
+            // add other contexts if available
+            foreach(var context in bindContexts)
+                _ = _bindContexts
+                    .Add(context)
+                    .ThrowIf(false, new ArgumentException($"Duplicate {typeof(IBindContext)} detected"));
         }
 
-        public override int GetHashCode() => HashCode.Combine(ServiceType, Implementation, Scope, Profile);
+        public override int GetHashCode() => HashCode.Combine(ServiceType, Scope, Profile, ContextHashCode());
 
         public override bool Equals(object obj)
         {
             return obj is RegistrationInfo other
-                && other.ServiceType.NullOrEquals(ServiceType)
-                && other.Implementation.NullOrEquals(Implementation)
                 && other.Scope.Equals(Scope)
-                && other.Profile.Equals(Profile);
+                && other.Profile.Equals(Profile)
+                && other.ServiceType.NullOrEquals(ServiceType)
+                && other._bindContexts.NullOrTrue(_bindContexts, Enumerable.SequenceEqual);
         }
+
+        private int ContextHashCode() => Common.ValueHash(_bindContexts ?? Enumerable.Empty<IBindContext>());
+
+        private static bool ContainsDefaultContext(IEnumerable<IBindContext> contexts) => contexts.Any(c => c is IBindContext.DefaultContext);
 
         public static bool operator ==(RegistrationInfo first, RegistrationInfo second) => first.Equals(second);
         public static bool operator !=(RegistrationInfo first, RegistrationInfo second) => !first.Equals(second);
-    }
-
-
-    public interface IBoundImplementation
-    {
-        /// <summary>
-        /// Creates an <see cref="IBoundImplementation"/> of the given type.
-        /// </summary>
-        /// <param name="t">The implementation type</param>
-        public static IBoundImplementation Of(Type t) => new ImplType(t);
-
-        /// <summary>
-        /// Creates an <see cref="IBoundImplementation"/> of the given delegate and return type.
-        /// </summary>
-        /// <param name="t">The implementation type</param>
-        /// <param name="factory">The factory method that produces the instance of the implementation type</param>
-        public static IBoundImplementation Of(Type t, Delegate factory) => new ImplFactory(t, factory);
-
-        #region interface members
-        Type Type { get; }
-        #endregion
-
-        #region Union types
-        public class ImplType: IBoundImplementation
-        {
-            public Type Type { get; }
-
-            internal ImplType(Type type)
-            {
-                Type = type ?? throw new ArgumentNullException(nameof(type));
-            }
-
-            public override int GetHashCode() => Type.GetHashCode();
-
-            public override bool Equals(object obj)
-            {
-                return obj is ImplType other
-                    && other.Type.Equals(Type);
-            }
-        }
-
-        public class ImplFactory: IBoundImplementation
-        {
-            /// <summary>
-            /// A delegate with the signature: <c>T (IResolverContract)</c>
-            /// </summary>
-            public Delegate Factory { get; }
-
-            public Type Type { get; }
-
-            internal ImplFactory(Type type, Delegate factory)
-            {
-                Factory = factory ?? throw new ArgumentNullException(nameof(factory));
-                Type = type ?? throw new ArgumentNullException(nameof(type));
-            }
-
-            public override int GetHashCode() => Factory.GetHashCode();
-
-            public override bool Equals(object obj)
-            {
-                return obj is ImplFactory other
-                    && other.Factory.Equals(Factory)
-                    && other.Type.Equals(Type);
-            }
-        }
-        #endregion
     }
 }

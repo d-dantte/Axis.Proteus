@@ -94,7 +94,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)))
+                        IBindTarget.Of(typeof(C1_I1)))
                 });
             container.Collection.Append<I1, C1_I1>();
 
@@ -128,7 +128,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)),
+                        IBindTarget.Of(typeof(C1_I1)),
                         default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
@@ -164,12 +164,12 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)),
+                        IBindTarget.Of(typeof(C1_I1)),
                         default,
                         default),
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1_IProxyMarker)),
+                        IBindTarget.Of(typeof(C1_I1_IProxyMarker)),
                         default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
@@ -248,7 +248,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)))
+                        IBindTarget.Of(typeof(C1_I1)))
                 });
             container.Collection.Append<I1, C1_I1>();
 
@@ -282,7 +282,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)),
+                        IBindTarget.Of(typeof(C1_I1)),
                         default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
@@ -318,12 +318,12 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                 new[] {
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1)),
+                        IBindTarget.Of(typeof(C1_I1)),
                         default,
                         default),
                     new Registration(
                         typeof(I1),
-                        IBoundImplementation.Of(typeof(C1_I1_IProxyMarker)),
+                        IBindTarget.Of(typeof(C1_I1_IProxyMarker)),
                         default,
                         new InterceptorProfile(new DummyInterceptor())) });
 
