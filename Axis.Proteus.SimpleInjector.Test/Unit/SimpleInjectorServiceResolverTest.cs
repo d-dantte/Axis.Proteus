@@ -1,12 +1,13 @@
 ﻿using Axis.Luna.Extensions;
 using Axis.Proteus.Interception;
 using Axis.Proteus.IoC;
+using Axis.Proteus.SimpleInjector.NamedContext;
+using Axis.Proteus.SimpleInjector.Test.Types;
 using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SimpleInjector;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Axis.Proteus.SimpleInjector.Test.Unit
@@ -16,8 +17,8 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
     [TestClass]
     public class SimpleInjectorServiceResolverTest
     {
-        private Mock<IResolverContract> _mockResolver = new Mock<IResolverContract>();
         private Mock<IProxyGenerator> _mockProxyGenerator = new Mock<IProxyGenerator>();
+        private Mock<RegistryManifest> _mockManifest = new Mock<RegistryManifest>();
 
         #region Constructor
 
@@ -28,9 +29,10 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
             var resolver = new SimpleInjectorResolver(
                 new Container(),
                 _mockProxyGenerator.Object,
-                new Dictionary<Type, List<Registration>>());
+                new RegistryManifest());
 
-            Assert.AreEqual(0, resolver.RegistrationCount());
+            Assert.AreEqual(0, resolver.RootManifest().Count);
+            Assert.AreEqual(0, resolver.CollectionManifest().Count);
         }
 
         [TestMethod]
@@ -42,13 +44,13 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
             Assert.ThrowsException<ArgumentNullException>(() => new SimpleInjectorResolver(
                 null,
                 _mockProxyGenerator.Object,
-                new Dictionary<Type, List<Registration>>()));
+                new RegistryManifest()));
 
             //test
             Assert.ThrowsException<ArgumentNullException>(() => new SimpleInjectorResolver(
                 new Container(),
                 null,
-                new Dictionary<Type, List<Registration>>()));
+                new RegistryManifest()));
 
             //test
             Assert.ThrowsException<ArgumentNullException>(() => new SimpleInjectorResolver(
@@ -69,7 +71,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
             var resolver = new SimpleInjectorResolver(
                 container,
                 _mockProxyGenerator.Object,
-                Array.Empty<Registration>());
+                new RegistryManifest());
             var isContainerDisposed = false;
             container.ContainerScope.WhenScopeEnds(() => isContainerDisposed = true);
 
@@ -81,39 +83,88 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
         }
         #endregion
 
-        #region Resolve<Service>();
+        #region Resolve<Service>(ResolutionContextName);
 
         [TestMethod]
-        public void Resolve_1_WithoutInterceptor_ShouldResolve()
+        public void Resolve_1_WithValidRegistration_ShouldResolve()
         {
             // setup
-            var container = new Container();
+            var container = new Container()
+                .Use(c => c.Register<I1, C_I1>());
+            var manifest = new RegistryManifest()
+                .AddRootRegistration(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1))));
             var resolver = new SimpleInjectorResolver(
                 container,
                 _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)))
-                });
-            container.Collection.Append<I1, C1_I1>();
+                manifest);
 
             // test
             var obj = resolver.Resolve<I1>();
 
             // assert
             Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
+            Assert.IsTrue(obj is C_I1);
         }
 
-
         [TestMethod]
-        public void Resolve_1_WithInterfaceService_AndWithInterceptor_ShouldResolve()
+        public void Resolve_1_WithValidRegistration_AndNamedContext_ShouldResolve()
         {
-            // setup
+            #region TypeTarget context
+            // setup 
             var container = new Container();
-            container.Collection.Append<I1, C1_I1>();
+            var registrar = new SimpleInjectorRegistrar(container);
+            registrar.Register<I1, C_I1>(
+                default,
+                default,
+                IBindContext.Of(
+                    "contextName",
+                    IBindTarget.Of(typeof(C_I1_I2))));
+            var resolver = registrar.BuildResolver();
 
+            // test
+            var obj = resolver.Resolve<I1>();
+            var contextualObj = resolver.Resolve<I1>("contextName");
+
+            // assert
+            Assert.IsNotNull(obj);
+            Assert.IsTrue(obj is C_I1);
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_I2);
+            resolver.Dispose();
+            #endregion
+
+            #region FactoryTarget context
+            // setup 
+            container = new Container();
+            registrar = new SimpleInjectorRegistrar(container);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1_2>(
+                default,
+                default,
+                IBindContext.Of(
+                    "contextName",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            resolver = registrar.BuildResolver();
+
+            // test
+            obj = resolver.Resolve<I1>();
+            contextualObj = resolver.Resolve<I1>("contextName");
+
+            // assert
+            Assert.IsNotNull(obj);
+            Assert.IsTrue(obj is C_I1_2);
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_2);
+            var actual = contextualObj as C_I1_2;
+            Assert.IsNotNull(actual.Property);
+            resolver.Dispose();
+            #endregion
+
+            #region multiple contexts
+            // setup 
             _mockProxyGenerator
                 .Setup(g => g.CreateInterfaceProxyWithTarget(
                     It.IsAny<Type>(),
@@ -121,35 +172,53 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                     It.IsAny<IInterceptor[]>()))
                 .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
                 .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
+            container = new Container();
+            registrar = new SimpleInjectorRegistrar(
                 container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
+                _mockProxyGenerator.Object);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1>(
+                default,
+                new InterceptorProfile(new DummyInterceptor()),
+                IBindContext.Of(
+                    "contextName1",
+                    IBindTarget.Of(typeof(C_I1_I2))),
+                IBindContext.Of(
+                    "contextName2",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            resolver = registrar.BuildResolver();
 
             // test
-            var obj = resolver.Resolve<I1>();
+            obj = resolver.Resolve<I1>();
+            var ignoredContextObj = resolver.Resolve<I1>("ignoredContext");
+            contextualObj = resolver.Resolve<I1>("contextName1");
+            var contextualObj2 = resolver.Resolve<I1>("contextName2");
 
             // assert
             Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
+            Assert.IsTrue(obj is C_I1);
+
+            Assert.IsNotNull(ignoredContextObj);
+            Assert.IsTrue(ignoredContextObj is C_I1); // ignored named-context requests should resolve using the default-context
+
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_I2);
+            Assert.IsTrue(contextualObj is INamedContextReplacement);
+
+            Assert.IsNotNull(contextualObj2);
+            Assert.IsTrue(contextualObj2 is C_I1_2);
+            Assert.IsNotNull((contextualObj2 as C_I1_2).Property);
+
             _mockProxyGenerator.Verify();
+            resolver.Dispose();
+            #endregion
         }
 
-
         [TestMethod]
-        public void Resolve_1_WithMultipleInterfaceService_AndWithOneInterceptor_ShouldResolve()
+        public void Resolve_1_WithInvalidArguments()
         {
             // setup
-            var container = new Container();
-            container.Collection.Append<I1, C1_I1>();
-            container.Collection.Append<I1, C1_I1_IProxyMarker>();
-
             _mockProxyGenerator
                 .Setup(g => g.CreateInterfaceProxyWithTarget(
                     It.IsAny<Type>(),
@@ -157,117 +226,111 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                     It.IsAny<IInterceptor[]>()))
                 .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
                 .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
-                container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)),
-                        default,
-                        default),
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1_IProxyMarker)),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
-
-            // test
-            var obj = resolver.Resolve<I1>();
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
-            _mockProxyGenerator.Verify(
-                t => t.CreateInterfaceProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()),
-                Times.Never);
-
-            // test second object
-            obj = resolver.ResolveAll<I1>().Skip(1).First();
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1_IProxyMarker);
-            _mockProxyGenerator.Verify(
-                t => t.CreateInterfaceProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()),
-                Times.Once);
-        }
-
-
-        [TestMethod]
-        public void Resolve_1_WithClassService_AndWithInterceptor_ShouldResolve()
-        {
-            // setup
             var container = new Container();
-            container.Collection.Append<C1_I1, C1_I1>();
-
-            _mockProxyGenerator
-                .Setup(g => g.CreateClassProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()))
-                .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
-                .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
+            var registrar = new SimpleInjectorRegistrar(
                 container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(C1_I1),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
+                _mockProxyGenerator.Object);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1>(
+                default,
+                new InterceptorProfile(new DummyInterceptor()),
+                IBindContext.Of(
+                    "contextName1",
+                    IBindTarget.Of(typeof(C_I1_I2))),
+                IBindContext.Of(
+                    "contextName2",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            var resolver = registrar.BuildResolver();
 
-            // test
-            var obj = resolver.Resolve<C1_I1>();
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
-            _mockProxyGenerator.Verify();
+            // unregistered type
+            var instance = resolver.Resolve<I2>();
+            Assert.IsNull(instance);
         }
         #endregion
 
-        #region Resolve(Type);
+        #region Resolve(Type, ResolutionContextName);
 
         [TestMethod]
-        public void Resolve_2_WithoutInterceptor_ShouldResolve()
+        public void Resolve_2_WithValidRegistration_ShouldResolve()
         {
             // setup
-            var container = new Container();
+            var container = new Container()
+                .Use(c => c.Register<I1, C_I1>());
+            var manifest = new RegistryManifest()
+                .AddRootRegistration(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1))));
             var resolver = new SimpleInjectorResolver(
                 container,
                 _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)))
-                });
-            container.Collection.Append<I1, C1_I1>();
+                manifest);
 
             // test
             var obj = resolver.Resolve(typeof(I1));
 
             // assert
             Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
+            Assert.IsTrue(obj is C_I1);
         }
 
-
         [TestMethod]
-        public void Resolve_2_WithInterfaceService_AndWithInterceptor_ShouldResolve()
+        public void Resolve_2_WithValidRegistration_AndNamedContext_ShouldResolve()
         {
-            // setup
+            #region TypeTarget context
+            // setup 
             var container = new Container();
-            container.Collection.Append<I1, C1_I1>();
+            var registrar = new SimpleInjectorRegistrar(container);
+            registrar.Register<I1, C_I1>(
+                default,
+                default,
+                IBindContext.Of(
+                    "contextName",
+                    IBindTarget.Of(typeof(C_I1_I2))));
+            var resolver = registrar.BuildResolver();
 
+            // test
+            var obj = resolver.Resolve(typeof(I1));
+            var contextualObj = resolver.Resolve<I1>("contextName");
+
+            // assert
+            Assert.IsNotNull(obj);
+            Assert.IsTrue(obj is C_I1);
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_I2);
+            resolver.Dispose();
+            #endregion
+
+            #region FactoryTarget context
+            // setup 
+            container = new Container();
+            registrar = new SimpleInjectorRegistrar(container);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1_2>(
+                default,
+                default,
+                IBindContext.Of(
+                    "contextName",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            resolver = registrar.BuildResolver();
+
+            // test
+            obj = resolver.Resolve(typeof(I1));
+            contextualObj = resolver.Resolve<I1>("contextName");
+
+            // assert
+            Assert.IsNotNull(obj);
+            Assert.IsTrue(obj is C_I1_2);
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_2);
+            var actual = contextualObj as C_I1_2;
+            Assert.IsNotNull(actual.Property);
+            resolver.Dispose();
+            #endregion
+
+            #region multiple contexts
+            // setup 
             _mockProxyGenerator
                 .Setup(g => g.CreateInterfaceProxyWithTarget(
                     It.IsAny<Type>(),
@@ -275,35 +338,53 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                     It.IsAny<IInterceptor[]>()))
                 .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
                 .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
+            container = new Container();
+            registrar = new SimpleInjectorRegistrar(
                 container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
+                _mockProxyGenerator.Object);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1>(
+                default,
+                new InterceptorProfile(new DummyInterceptor()),
+                IBindContext.Of(
+                    "contextName1",
+                    IBindTarget.Of(typeof(C_I1_I2))),
+                IBindContext.Of(
+                    "contextName2",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            resolver = registrar.BuildResolver();
 
             // test
-            var obj = resolver.Resolve(typeof(I1));
+            obj = resolver.Resolve(typeof(I1));
+            var ignoredContextObj = resolver.Resolve<I1>("ignoredContext");
+            contextualObj = resolver.Resolve<I1>("contextName1");
+            var contextualObj2 = resolver.Resolve<I1>("contextName2");
 
             // assert
             Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
+            Assert.IsTrue(obj is C_I1);
+
+            Assert.IsNotNull(ignoredContextObj);
+            Assert.IsTrue(ignoredContextObj is C_I1); // ignored named-context requests should resolve using the default-context
+
+            Assert.IsNotNull(contextualObj);
+            Assert.IsTrue(contextualObj is C_I1_I2);
+            Assert.IsTrue(contextualObj is INamedContextReplacement);
+
+            Assert.IsNotNull(contextualObj2);
+            Assert.IsTrue(contextualObj2 is C_I1_2);
+            Assert.IsNotNull((contextualObj2 as C_I1_2).Property);
+
             _mockProxyGenerator.Verify();
+            resolver.Dispose();
+            #endregion
         }
 
-
         [TestMethod]
-        public void Resolve_2_WithMultipleInterfaceService_AndWithOneInterceptor_ShouldResolve()
+        public void Resolve_2_WithInvalidArguments()
         {
             // setup
-            var container = new Container();
-            container.Collection.Append<I1, C1_I1>();
-            container.Collection.Append<I1, C1_I1_IProxyMarker>();
-
             _mockProxyGenerator
                 .Setup(g => g.CreateInterfaceProxyWithTarget(
                     It.IsAny<Type>(),
@@ -311,112 +392,175 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
                     It.IsAny<IInterceptor[]>()))
                 .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
                 .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
-                container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1)),
-                        default,
-                        default),
-                    new Registration(
-                        typeof(I1),
-                        IBindTarget.Of(typeof(C1_I1_IProxyMarker)),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
-
-            // test
-            var obj = resolver.Resolve(typeof(I1));
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
-            _mockProxyGenerator.Verify(
-                t => t.CreateInterfaceProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()),
-                Times.Never);
-
-            // test second object
-            obj = resolver.ResolveAll<I1>().Skip(1).First();
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1_IProxyMarker);
-            _mockProxyGenerator.Verify(
-                t => t.CreateInterfaceProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()),
-                Times.Once);
-        }
-
-
-        [TestMethod]
-        public void Resolve_2_WithClassService_AndWithInterceptor_ShouldResolve()
-        {
-            // setup
             var container = new Container();
-            container.Collection.Append<C1_I1, C1_I1>();
-
-            _mockProxyGenerator
-                .Setup(g => g.CreateClassProxyWithTarget(
-                    It.IsAny<Type>(),
-                    It.IsAny<object>(),
-                    It.IsAny<IInterceptor[]>()))
-                .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
-                .Verifiable();
-
-            var resolver = new SimpleInjectorResolver(
+            var registrar = new SimpleInjectorRegistrar(
                 container,
-                _mockProxyGenerator.Object,
-                new[] {
-                    new Registration(
-                        typeof(C1_I1),
-                        default,
-                        new InterceptorProfile(new DummyInterceptor())) });
+                _mockProxyGenerator.Object);
+            registrar.Register<TheClass>();
+            registrar.Register<I1, C_I1>(
+                default,
+                new InterceptorProfile(new DummyInterceptor()),
+                IBindContext.Of(
+                    "contextName1",
+                    IBindTarget.Of(typeof(C_I1_I2))),
+                IBindContext.Of(
+                    "contextName2",
+                    IBindTarget.Of(
+                        new Func<IResolverContract, C_I1_2>(r => new C_I1_2(r.Resolve<TheClass>())))));
+            var resolver = registrar.BuildResolver();
 
-            // test
-            var obj = resolver.Resolve(typeof(C1_I1));
-
-            // assert
-            Assert.IsNotNull(obj);
-            Assert.IsTrue(obj is C1_I1);
-            _mockProxyGenerator.Verify();
+            // unregistered type
+            var instance = resolver.Resolve(typeof(I2));
+            Assert.IsNull(instance);
         }
 
         #endregion
 
         #region ResolveAll<Service>();
+        [TestMethod]
+        public void ResolveAll_1_WithValidArgs_ShouldResolve()
+        {
+            // setup
+            var container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            var manifest = new RegistryManifest()
+                .AddCollectionRegistrations(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1))));
+            var resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                manifest);
+
+            // test
+            var objs = resolver.ResolveAll<I1>();
+
+            // assert
+            Assert.IsNotNull(objs);
+            var instances = objs.ToArray();
+            Assert.IsTrue(instances[0] is C_I1);
+
+            // setup with interceptor
+            _mockProxyGenerator
+                .Setup(g => g.CreateInterfaceProxyWithTarget(
+                    It.IsAny<Type>(),
+                    It.IsAny<object>(),
+                    It.IsAny<IInterceptor[]>()))
+                .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
+                .Verifiable();
+            container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            manifest = new RegistryManifest()
+                .AddCollectionRegistrations(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1)),
+                    default,
+                    new InterceptorProfile(new DummyInterceptor())));
+            resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                manifest);
+
+            // test
+            objs = resolver.ResolveAll<I1>();
+
+            // assert
+            Assert.IsNotNull(objs);
+            instances = objs.ToArray();
+            Assert.IsTrue(instances[0] is C_I1);
+            _mockProxyGenerator.Verify();
+        }
+
+        [TestMethod]
+        public void ResolveAll_1_WithInvalidArgs_ShouldResolve()
+        {
+            // 1. test default registration
+            _mockManifest
+                .Setup(m => m.CollectionRegistrationsFor(It.IsAny<Type>()))
+                .Returns(new[] { default(Registration) });
+            var container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            var resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                _mockManifest.Object);
+
+            Assert.ThrowsException<InvalidOperationException>(() => resolver.ResolveAll<I1>().First());
+
+        }
         #endregion
 
         #region ResolveAll(Type);
-        #endregion
-
-
-        #region nested types
-        public interface I1 { }
-        public interface I2 { }
-
-        public interface I3_I1I2: I1, I2 { }
-
-        public class C1_I1 : I1 { }
-        public class C1_I1_IProxyMarker : I1, IProxyMarker { }
-        public class C2_I2 : I2 { }
-        public class C3_I3 : I3 { }
-        public class C4_I1I2 : I1, I2 { }
-
-        public class DummyInterceptor : IInterceptor
+        [TestMethod]
+        public void ResolveAll_2_WithValidArgs_ShouldResolve()
         {
-            public List<Castle.DynamicProxy.IInvocation> Invocations { get; } = new List<Castle.DynamicProxy.IInvocation>();
+            // setup
+            var container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            var manifest = new RegistryManifest()
+                .AddCollectionRegistrations(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1))));
+            var resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                manifest);
 
-            public void Intercept(Castle.DynamicProxy.IInvocation invocation)
-            {
-                Invocations.Add(invocation);
-            }
+            // test
+            var objs = resolver.ResolveAll(typeof(I1));
+
+            // assert
+            Assert.IsNotNull(objs);
+            var instances = objs.ToArray();
+            Assert.IsTrue(instances[0] is C_I1);
+
+            // setup with interceptor
+            _mockProxyGenerator
+                .Setup(g => g.CreateInterfaceProxyWithTarget(
+                    It.IsAny<Type>(),
+                    It.IsAny<object>(),
+                    It.IsAny<IInterceptor[]>()))
+                .Returns<Type, object, IInterceptor[]>((arg1, arg2, arg3) => arg2)
+                .Verifiable();
+            container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            manifest = new RegistryManifest()
+                .AddCollectionRegistrations(new Registration(
+                    typeof(I1),
+                    IBindTarget.Of(typeof(C_I1)),
+                    default,
+                    new InterceptorProfile(new DummyInterceptor())));
+            resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                manifest);
+
+            // test
+            objs = resolver.ResolveAll(typeof(I1));
+
+            // assert
+            Assert.IsNotNull(objs);
+            instances = objs.ToArray();
+            Assert.IsTrue(instances[0] is C_I1);
+            _mockProxyGenerator.Verify();
+        }
+
+        [TestMethod]
+        public void ResolveAll_2_WithInvalidArgs_ShouldResolve()
+        {
+            // 1. test default registration
+            _mockManifest
+                .Setup(m => m.CollectionRegistrationsFor(It.IsAny<Type>()))
+                .Returns(new[] { default(Registration) });
+            var container = new Container();
+            container.Collection.Append<I1, C_I1>();
+            var resolver = new SimpleInjectorResolver(
+                container,
+                _mockProxyGenerator.Object,
+                _mockManifest.Object);
+
+            Assert.ThrowsException<InvalidOperationException>(() => resolver.ResolveAll(typeof(I1)).First());
+
         }
         #endregion
     }

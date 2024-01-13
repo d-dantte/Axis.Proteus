@@ -11,6 +11,10 @@ namespace Axis.SimpleInjector.Tests.Functional
         {
             var container = new Container();
 
+            var tlength = Lifestyle.Transient.Length;
+            var slength = Lifestyle.Singleton.Length;
+            var sclength = Lifestyle.Scoped.Length;
+
             container.Collection.Append<IService1, Impl1>();
             container.Collection.Append<IService2, Impl2>();
             container.Collection.Append<IService1, MixedImpl1>();

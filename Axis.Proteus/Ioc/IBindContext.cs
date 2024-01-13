@@ -1,8 +1,6 @@
 ﻿using Axis.Luna.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 
 namespace Axis.Proteus.IoC
 {
@@ -29,26 +27,22 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// Creates a <see cref="ParameterContext"/>
         /// </summary>
-        /// <param name="parameter">The (constructor) parameter receiving the injection</param>
         /// <param name="target">The target type of the injection</param>
         /// <param name="predicate">The predicate that must be true for this injection to be made</param>
-        public static IBindContext Of(
-            ParameterInfo parameter,
+        public static IBindContext OfParameter(
             IBindTarget target,
             Func<ParameterInfo, bool> predicate)
-            => new ParameterContext(parameter, target, predicate);
+            => new ParameterContext(target, predicate);
 
         /// <summary>
         /// Creates a <see cref="PropertyContext"/>
         /// </summary>
-        /// <param name="property">The property receiving the injection</param>
         /// <param name="target">The target type of the injection</param>
         /// <param name="predicate">The predicate that must be true for this injection to be made</param>
-        public static IBindContext Of(
-            PropertyInfo property,
+        public static IBindContext OfProperty(
             IBindTarget target,
             Func<PropertyInfo, bool> predicate)
-            => new PropertyContext(property, target, predicate);
+            => new PropertyContext(target, predicate);
 
         /// <summary>
         /// Creates a <see cref="NamedContext"/>
@@ -96,7 +90,13 @@ namespace Axis.Proteus.IoC
             }
 
             public static bool operator ==(DefaultContext first, DefaultContext second) => first.NullOrEquals(second);
+
             public static bool operator !=(DefaultContext first, DefaultContext second) => !first.NullOrEquals(second);
+
+
+            public static implicit operator DefaultContext(IBindTarget.FactoryTarget target) => new DefaultContext(target);
+
+            public static implicit operator DefaultContext(IBindTarget.TypeTarget target) => new DefaultContext(target);
         }
 
         public class NamedContext : IBindContext
@@ -132,32 +132,24 @@ namespace Axis.Proteus.IoC
             public IBindTarget Target { get; }
 
             /// <summary>
-            /// The parameter receiving the instance of the injection
-            /// </summary>
-            public ParameterInfo Parameter { get; }
-
-            /// <summary>
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<ParameterInfo, bool> Predicate { get; }
 
             internal ParameterContext(
-                ParameterInfo parameter,
                 IBindTarget target,
                 Func<ParameterInfo, bool> predicate)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
-                Parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
                 Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target, Parameter, Predicate);
+            public override int GetHashCode() => HashCode.Combine(Target, Predicate);
 
             public override bool Equals(object obj)
             {
                 return obj is ParameterContext other
                     && other.Target.Equals(Target)
-                    && other.Parameter.Equals(Parameter)
                     && other.Predicate.Equals(Predicate);
             }
 
@@ -170,32 +162,24 @@ namespace Axis.Proteus.IoC
             public IBindTarget Target { get; }
 
             /// <summary>
-            /// The property receiving the instance of the injection
-            /// </summary>
-            public PropertyInfo Property { get; }
-
-            /// <summary>
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<PropertyInfo, bool> Predicate { get; }
 
             internal PropertyContext(
-                PropertyInfo property,
                 IBindTarget target,
                 Func<PropertyInfo, bool> predicate)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
-                Property = property ?? throw new ArgumentNullException(nameof(property));
                 Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target, Property, Predicate);
+            public override int GetHashCode() => HashCode.Combine(Target, Predicate);
 
             public override bool Equals(object obj)
             {
                 return obj is PropertyContext other
                     && other.Target.Equals(Target)
-                    && other.Property.Equals(Property)
                     && other.Predicate.Equals(Predicate);
             }
 

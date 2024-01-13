@@ -39,6 +39,8 @@ namespace Axis.Castle.Tests.Functional
             Console.WriteLine(somethingProxy.TimeToLive());
             Assert.AreEqual(4, interceptions.Count);
 
+            Assert.ThrowsException<Exception>(() => somethingProxy.FaultingMethod());
+
             // sealed target
             somethingProxy = generator.CreateInterfaceProxyWithTarget<ISomething>(
                 new SealedSomething(),
@@ -49,10 +51,10 @@ namespace Axis.Castle.Tests.Functional
             Assert.IsNotNull(somethingProxy);
 
             Console.WriteLine(somethingProxy.Name());
-            Assert.AreEqual(5, interceptions.Count);
+            Assert.AreEqual(6, interceptions.Count);
 
             Console.WriteLine(somethingProxy.TimeToLive());
-            Assert.AreEqual(6, interceptions.Count);
+            Assert.AreEqual(7, interceptions.Count);
         }
 
         [TestMethod]
@@ -106,6 +108,11 @@ namespace Axis.Castle.Tests.Functional
                 new SealedSomething(),
                 new Interceptor(interceptions)));
         }
+
+        [TestMethod]
+        public void NoTargetInterceptionTest()
+        {
+        }
     }
 
     public class Interceptor : IInterceptor
@@ -120,7 +127,14 @@ namespace Axis.Castle.Tests.Functional
         public void Intercept(IInvocation invocation)
         {
             interceptionCount.Add(DateTimeOffset.Now);
-            invocation.Proceed();
+            try
+            {
+                invocation.Proceed();
+            }
+            catch(Exception e)
+            {
+                throw;
+            }
         }
     }
 }

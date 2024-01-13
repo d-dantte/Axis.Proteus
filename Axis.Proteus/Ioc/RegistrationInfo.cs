@@ -1,4 +1,5 @@
 ﻿using Axis.Luna.Extensions;
+using Axis.Proteus.Exceptions;
 using Axis.Proteus.Interception;
 using System;
 using System.Collections.Generic;
@@ -65,11 +66,28 @@ namespace Axis.Proteus.IoC
             if (ContainsDefaultContext(bindContexts))
                 throw new ArgumentException($"Supplied contexts MUST not contain a {typeof(IBindContext.DefaultContext)} instance.");
 
+            if (!serviceType.IsAssignableFrom(target.Type))
+                throw new IncompatibleTypesException(serviceType, target.Type);
+
             // add other contexts if available
+            var namedHash = new HashSet<string>();
             foreach(var context in bindContexts)
+            {
+                if (context is null)
+                    throw new ArgumentException($"{nameof(bindContexts)} must not contain null values");
+
+                // deny duplicate named context names
+                else if (context is IBindContext.NamedContext namedContext
+                    && !namedHash.Add(namedContext.Name.Name))
+                    throw new ArgumentException($"Duplicate {typeof(IBindContext.NamedContext)} name detected: {namedContext.Name}");
+
+                else if (!serviceType.IsAssignableFrom(context.Target.Type))
+                    throw new IncompatibleTypesException(serviceType, target.Type);
+
                 _ = _bindContexts
                     .Add(context)
                     .ThrowIf(false, new ArgumentException($"Duplicate {typeof(IBindContext)} detected"));
+            }
         }
 
         public override int GetHashCode() => HashCode.Combine(ServiceType, Scope, Profile, ContextHashCode());

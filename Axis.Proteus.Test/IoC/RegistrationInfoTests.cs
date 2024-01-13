@@ -1,12 +1,9 @@
-﻿using Axis.Proteus.Interception;
+﻿using Axis.Proteus.Exceptions;
+using Axis.Proteus.Interception;
 using Axis.Proteus.IoC;
 using Axis.Proteus.Test.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Axis.Proteus.Test.IoC
 {
@@ -54,16 +51,21 @@ namespace Axis.Proteus.Test.IoC
             var scope = default(RegistryScope);
             var profile = default(InterceptorProfile);
             var namedContext = IBindContext.Of("name", target);
+            var namedContext2 = IBindContext.Of("name", IBindTarget.Of(r => typeof(C_I1_1)));
 
             Assert.ThrowsException<ArgumentNullException>(() => new RegistrationInfo(null));
             Assert.ThrowsException<ArgumentNullException>(() => new RegistrationInfo(null, target, scope, profile));
             Assert.ThrowsException<ArgumentNullException>(() => new RegistrationInfo(serviceType, null, scope, profile));
+
+            // assert invalid default context
             Assert.ThrowsException<ArgumentException>(() => new RegistrationInfo(
                 serviceType,
                 target,
                 scope,
                 profile,
                 IBindContext.Of(target)));
+
+            // assert duplicate named context
             Assert.ThrowsException<ArgumentException>(() => new RegistrationInfo(
                 serviceType,
                 target,
@@ -71,6 +73,26 @@ namespace Axis.Proteus.Test.IoC
                 profile,
                 namedContext,
                 namedContext));
+            Assert.ThrowsException<ArgumentException>(() => new RegistrationInfo(
+                serviceType,
+                target,
+                scope,
+                profile,
+                namedContext,
+                namedContext2));
+
+            // assert incompatible default target type
+            Assert.ThrowsException<IncompatibleTypesException>(() => new RegistrationInfo(
+                serviceType,
+                IBindTarget.Of(typeof(Guid))));
+
+            // assert incompatible conditional target type
+            Assert.ThrowsException<IncompatibleTypesException>(() => new RegistrationInfo(
+                serviceType,
+                target,
+                scope,
+                profile,
+                IBindContext.Of("named", IBindTarget.Of(r => Guid.NewGuid()))));
         }
 
         [TestMethod]

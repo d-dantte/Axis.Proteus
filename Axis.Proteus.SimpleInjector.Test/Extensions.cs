@@ -34,37 +34,5 @@ namespace Axis.Proteus.SimpleInjector.Test
                 .Distinct()
                 .ToArray();
         }
-
-        public static HashSet<TypeMap> ExtractRootRegistrations(this Container container)
-        {
-            return new HashSet<TypeMap>()
-                .Use(set => set
-                    .AddRange(container
-                        .GetRootRegistrations()
-                        .FlattenRegistrations()));
-        }
-
-        public static HashSet<TypeMap> ExtractUnverifiedRegistrations(this Container container)
-        {
-            return new HashSet<TypeMap>()
-                .Use(set => set
-                    .AddRange(container
-                        .GetCurrentRegistrations()
-                        .FlattenRegistrations()));
-        }
-
-        public static bool ContainsRegistration(this HashSet<TypeMap> set, Type serviceType)
-        {
-            return set.Contains(new TypeMap(
-                serviceType ?? throw new ArgumentNullException(nameof(serviceType)),
-                serviceType ?? throw new ArgumentNullException(nameof(serviceType)))); // <-- this second test is redundant
-        }
-
-        public static bool ContainsRegistration(this HashSet<TypeMap> set, Type serviceType, Type implementationType)
-        {
-            return set.Contains(new TypeMap(
-                serviceType ?? throw new ArgumentNullException(nameof(serviceType)),
-                implementationType ?? throw new ArgumentNullException(nameof(implementationType))));
-        }
     }
 }

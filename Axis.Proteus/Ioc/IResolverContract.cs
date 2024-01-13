@@ -10,7 +10,7 @@ namespace Axis.Proteus.IoC
     public interface IResolverContract : IDisposable
     {
         /// <summary>
-        /// Resolve one instance of the specified service - guaranteed to be the first implementation to be registered.
+        /// Resolve one instance of the specified service, or <c>null</c> if the type was not registered.
         /// <para>
         /// If a <c>contextName</c> is supplied and non is found, it will be ignored. If non is supplied, same applies.
         /// </para>
@@ -21,7 +21,7 @@ namespace Axis.Proteus.IoC
         Service Resolve<Service>(ResolutionContextName contextName = default) where Service : class;
 
         /// <summary>
-        /// Resolve one instance of the specified service - guaranteed to be the first implementation to be registered.
+        /// Resolve one instance of the specified service, or <c>null</c> if the type was not registered.
         /// <para>
         /// If a <c>contextName</c> is supplied and non is found, it will be ignored. If non is supplied, same applies.
         /// </para>
@@ -32,7 +32,7 @@ namespace Axis.Proteus.IoC
         object Resolve(Type serviceType, ResolutionContextName contextName = default);
 
         /// <summary>
-        /// Resolves a collection of instances registered for a service
+        /// Resolves a collection of instances registered for a service.
         /// </summary>
         /// <typeparam name="Service">The service to be resolved</typeparam>
         /// <returns>The instances registered, or an empty enumerable if non were registered</returns>

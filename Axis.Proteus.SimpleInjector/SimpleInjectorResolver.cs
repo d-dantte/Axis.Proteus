@@ -1,5 +1,4 @@
 ﻿using Axis.Luna.Extensions;
-using Axis.Proteus;
 using Axis.Proteus.IoC;
 using Axis.Proteus.SimpleInjector.NamedContext;
 using Castle.DynamicProxy;
@@ -40,26 +39,21 @@ namespace Axis.Proteus.SimpleInjector
             if (registration == null)
                 return null;
 
-            var instance =
+            (var instance, var context) =
                 contextName != default
                 && registration.Value.TryGetNamedContext(contextName, out var namedContext)
-                ? _container
-                    .GetInstance(
-                        contextName.ToNamedContextType(
-                            serviceType,
-                            namedContext.Target.Type))
-                    .As<NamedContextContainer>().Instance
-                : _container.GetInstance(serviceType);
+                ? (GetNamedContextInstance(registration.Value, namedContext), (IBindContext) namedContext)
+                : (_container.GetInstance(serviceType), registration.Value.DefaultContext);
 
-
-            if (registration.Value.Profile == default)
+            if (instance == null
+                || registration.Value.Profile == default)
                 return instance;
 
-            if (registration.Value.DefaultContext.Target is IBindTarget.TypeTarget typeTarget
-                && typeTarget.Type != instance.GetType())
+            if (context.Target is IBindTarget.TypeTarget typeTarget
+                && !typeTarget.Type.IsAssignableFrom(instance.GetType()))
                 throw new InvalidOperationException($"Registration mis-match: registration type: {typeTarget.Type}, resolved type: {instance.GetType()}");
 
-            else if (registration.Value.DefaultContext.Target is IBindTarget.FactoryTarget factoryTarget
+            else if (context.Target is IBindTarget.FactoryTarget factoryTarget
                 && !factoryTarget.Type.IsAssignableFrom(instance.GetType()))
                 throw new InvalidOperationException($"Registration mis-match: registration type: {factoryTarget.Type}, resolved type: {instance.GetType()}");
 
@@ -82,28 +76,28 @@ namespace Axis.Proteus.SimpleInjector
 
         public IEnumerable<object> ResolveAll(Type serviceType)
         {
-            return _container
-                .GetAllInstances(serviceType)
-                .PairWith(_manifest.CollectionRegistrationsFor(serviceType))
+            return _manifest
+                .CollectionRegistrationsFor(serviceType)
+                .PairWith(_container.GetAllInstances(serviceType))
                 .Select((pair, index) =>
                 {
-                    var instance = pair.Key;
+                    var instance = pair.Item2;
 
                     if (instance == null)
                         return null;
 
-                    var info = pair.Value.ThrowIfDefault(
+                    var info = pair.Item1.ThrowIfDefault(
                         new InvalidOperationException($"Invalid registration found at index: {index}, for service {serviceType}"));
 
                     if (info.Profile == default)
                         return instance;
 
-                    if (info.DefaultContext.Target is IBindTarget.TypeTarget implType
-                        && implType.Type != instance.GetType())
+                    if (info.DefaultContext.Target is IBindTarget.TypeTarget typeTarget
+                        && !typeTarget.Type.IsAssignableFrom(instance.GetType()))
                         throw new InvalidOperationException($"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
 
-                    else if (info.DefaultContext.Target is IBindTarget.FactoryTarget implFactory
-                        && !implFactory.Type.IsAssignableFrom(instance.GetType()))
+                    else if (info.DefaultContext.Target is IBindTarget.FactoryTarget factoryTarget
+                        && !factoryTarget.Type.IsAssignableFrom(instance.GetType()))
                         throw new InvalidOperationException($"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
 
                     return serviceType.IsClass
@@ -134,5 +128,29 @@ namespace Axis.Proteus.SimpleInjector
                 .RootServices()
                 .ToDictionary(type => type, type => _manifest.RootRegistrationFor(type) ?? throw new Exception($"no registration was found for the given type: {type}"))
                 .ApplyTo(dict => new ReadOnlyDictionary<Type, RegistrationInfo>(dict));
+
+        private object GetNamedContextInstance(
+            RegistrationInfo registration,
+            IBindContext.NamedContext bindContext)
+        {
+            return bindContext.Target switch
+            {
+                IBindTarget.TypeTarget typeTarget => bindContext.Name
+                    .ToNamedContextReplacementType(
+                        registration.ServiceType,
+                        typeTarget.Type)
+                    .ApplyTo(_container.GetInstance),
+
+                IBindTarget.FactoryTarget factoryTarget => bindContext.Name
+                    .ToNamedContextContainerType(
+                        registration.ServiceType,
+                        factoryTarget.Type)
+                    .ApplyTo(_container.GetInstance)
+                    .As<NamedContextContainerBase>()
+                    .Instance,
+
+                _ => throw new InvalidOperationException($"Unknown {nameof(IBindContext.NamedContext)} bind-target: {bindContext.Target}")
+            };
+        }
     }
 }

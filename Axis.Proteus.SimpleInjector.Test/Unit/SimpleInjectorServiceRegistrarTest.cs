@@ -1,10 +1,15 @@
-﻿using Axis.Proteus.Interception;
+﻿using Axis.Luna.Extensions;
+using Axis.Proteus.Exceptions;
+using Axis.Proteus.Interception;
 using Axis.Proteus.IoC;
+using Axis.Proteus.SimpleInjector.NamedContext;
+using Axis.Proteus.SimpleInjector.Test.Types;
 using Castle.DynamicProxy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SimpleInjector;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Axis.Proteus.SimpleInjector.Test.Unit
@@ -19,291 +24,143 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			//setup mock
 		}
 
-		#region Register(Type, RegistryScope?, InterceptorProfile?);
-		[TestMethod]
-		public void Register_1_WithValidServiceType_ShouldAddRegistration()
-		{
-			// test
+        #region Constructor
+        [TestMethod]
+		public void Constructor_WithValidArgs_ShouldCreateInstance()
+        {
 			var registrar = new SimpleInjectorRegistrar(
 				new Container(),
 				_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.RegistrationsFor(typeof(C_I1));
 
-			Assert.IsNotNull(registrations);
-			var info = registrations.First();
-			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			var implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
-			Assert.AreEqual(default, info.Profile);
+			Assert.IsNotNull(registrar);
+        }
 
-			// test
-			registrar = new SimpleInjectorRegistrar(
-				new Container(),
-				_mockProxyGenerator.Object);
-			var profile = new InterceptorProfile(new DummyInterceptor());
-			registrations = registrar
-				.Register(
-					typeof(C_I1),
-					RegistryScope.Transient,
-					profile)
-				.RegistrationsFor(typeof(C_I1));
-
-			Assert.IsNotNull(registrations);
-			info = registrations.First();
-			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.AreEqual(profile, info.Profile);
+        [TestMethod]
+		public void Constructor_WithInvalidArgs_ShouldThrowException()
+		{
+			Assert.ThrowsException<ArgumentNullException>(() => new SimpleInjectorRegistrar(new Container(), null));
+			Assert.ThrowsException<ArgumentNullException>(() => new SimpleInjectorRegistrar(null, _mockProxyGenerator.Object));
 		}
+		#endregion
 
+		#region BuildResolver()
 		[TestMethod]
-		public void Register_1_WithNullServiceType_ShouldThrowException()
+		public void BuildResolver_WithValidManifest_ShouldBuildResolver()
         {
-			// nothing to setup
+			// setup
+			var container = new Container();
+			var registrar = new SimpleInjectorRegistrar(
+				container,
+				_mockProxyGenerator.Object);
+			var otherClassType = typeof(OtherClass);
 
 			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			Assert.ThrowsException<ArgumentNullException>(
-				() => registrar.Register(
-					null,
-					RegistryScope.Transient));
-		}
-
-		[TestMethod]
-		public void Register_1_WithDuplicateRegistration_ShouldAddRegistration()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.Register(
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.RegistrationsFor(typeof(C_I1))
-				.ToArray();
-
-			Assert.AreEqual(2, registrations.Length);
-			Assert.AreEqual(registrations[0], registrations[1]);
-		}
-
-		#endregion
-
-		#region Register(Type, Type, RegistryScope?, InterceptorProfile?);
-		[TestMethod]
-		public void Register_2_WithValidServiceType_ShouldAddRegistration()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					typeof(I1),
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.RegistrationsFor(typeof(I1));
-
-			Assert.IsNotNull(registrations);
-			var info = registrations.First();
-			Assert.AreEqual(typeof(I1), info.ServiceType);
-			var implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
-			Assert.AreEqual(default, info.Profile);
-		}
-
-		[TestMethod]
-		public void Register_2_WithNullTypes_ShouldThrowException()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			Assert.ThrowsException<ArgumentNullException>(
-				() => registrar.Register(
-					null,
-					typeof(C_I1),
-					RegistryScope.Transient));
-
-			Assert.ThrowsException<ArgumentNullException>(
-				() => registrar.Register(
-					typeof(I1),
-					(Type)null,
-					RegistryScope.Transient));
-		}
-
-		[TestMethod]
-		public void Register_2_WithDuplicateRegistration_ShouldThrowException()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					typeof(I1),
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.Register(
-					typeof(I1),
-					typeof(C_I1),
-					RegistryScope.Transient)
-				.RegistrationsFor(typeof(I1))
-				.ToArray();
-
-			Assert.AreEqual(2, registrations.Length);
-			Assert.AreEqual(registrations[0], registrations[1]);
-		}
-		#endregion
-
-		#region Register(Type, Func<IResolverContract, object>, RegistryScope?, InterceptorProfile?);
-
-		[TestMethod]
-		public void Register_3_WithValidArgs_ShouldRegister()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					typeof(I1),
-					new Func<IResolverContract, I1>(_r => new C_I1()),
-					RegistryScope.Transient)
-				.Register(
-					typeof(I1),
-					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
+			var resolver = registrar
+				.Register<I1, C_I1>()
+				.Register<I2, C_I2>(
 					RegistryScope.Singleton,
-					new InterceptorProfile(new DummyInterceptor()))
-				.RegistrationsFor(typeof(I1))
-				.ToArray();
+					new[] { new DummyInterceptor() },
+					IBindContext.Of( // named context
+						"myContext",
+						IBindTarget.Of(typeof(C_I2))),
+					IBindContext.Of( // named context
+						"myOtherContext",
+						IBindTarget.Of(new Func<IResolverContract, C_I2>(r => new C_I2()))),
+					IBindContext.OfParameter( // param context
+						IBindTarget.Of(typeof(C_I1_I2)),
+						param => param.Name.Equals("a")),
+					IBindContext.OfParameter( // param context
+						IBindTarget.Of(new Func<IResolverContract, C_I1_I2>(r => new C_I1_I2())),
+						param => param.Name.Equals("b")),
+					IBindContext.OfProperty( // property context
+						IBindTarget.Of(typeof(C_I1I2A)),
+						prop => prop.Name.Equals("a")),
+					IBindContext.OfProperty( // property context
+						IBindTarget.Of(new Func<IResolverContract, C_I1I2A>(r => new C_I1I2A())),
+						prop => prop.Name.Equals("b")))
+				.RegisterAll<I1>(
+					default,
+					default,
+					IBindTarget.Of(typeof(C_I1)))
+				.BuildResolver();
 
-			Assert.AreEqual(2, registrations.Length);
-			Assert.AreEqual(RegistryScope.Singleton, registrations[1].Scope);
+			Assert.IsNotNull(resolver);
+
+            #region Root
+            // assert root manifest
+            Assert.AreEqual(2, registrar.RootManifest().Count);
+			Assert.IsTrue(registrar.RootManifest().Keys.Contains(typeof(I1)));
+			Assert.IsTrue(registrar.RootManifest().Keys.Contains(typeof(I2)));
+
+			/// assert container has correct registrations
+			// 1. I1
+			var containerRegistration = container.GetRegistration<I1>();
+			Assert.IsNotNull(containerRegistration);
+			Assert.AreEqual(typeof(I1), containerRegistration.ServiceType);
+			Assert.AreEqual(typeof(C_I1), containerRegistration.ImplementationType);
+			Assert.AreEqual(Lifestyle.Transient, containerRegistration.Lifestyle);
+
+			// 2. I2
+			var replacementName = DynamicTypeUtil.ToTypeName(
+				"myContext",
+				typeof(I2),
+				typeof(C_I2),
+				DynamicTypeTag.Replacement,
+				out _);
+			var containerName = DynamicTypeUtil.ToTypeName(
+				"myOtherContext",
+				typeof(I2),
+				typeof(C_I2),
+				DynamicTypeTag.Container,
+				out _);
+
+			var rootRegistrations = container.GetRootRegistrations();
+			Assert.AreEqual(7, rootRegistrations.Count(r =>
+			{
+				return r.Lifestyle == Lifestyle.Singleton
+					&& (r.ServiceType == typeof(I2)
+					|| r.ServiceType.Name.Equals(replacementName)
+					|| r.ServiceType.Name.Equals(containerName));
+			}));
+            #endregion
+
+            #region Collection
+            // assert collection manifest
+            Assert.AreEqual(1, registrar.CollectionManifest().Count);
+			Assert.IsTrue(registrar.CollectionManifest().Keys.Contains(typeof(I1)));
+
+			/// assert container has correct registrations
+			// 1. I1
+			containerRegistration = container.GetRegistration<IEnumerable<I1>>();
+			Assert.IsNotNull(containerRegistration);
+			Assert.AreEqual(typeof(IEnumerable<I1>), containerRegistration.ServiceType);
+
+			// collection registration uses Singleton for the collection itself, and 
+			// regular lifestyles for individual types
+			Assert.AreEqual(Lifestyle.Singleton, containerRegistration.Lifestyle);
+
+			#endregion
 		}
-		#endregion
+        #endregion
 
-		#region Register<Impl>(RegistryScope?, InterceptorProfile?);
-		[TestMethod]
-		public void Register_4_WithValidServiceType_ShouldRegister()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register<C_I1>(RegistryScope.Transient)
-				.RegistrationsFor(typeof(C_I1));
+        #region IsRegistrationClosed()
+        [TestMethod]
+		public void IsRegistrationClosed_ShouldIndicateRegistrationClosedStatus()
+        {
+			var container = new Container();
+			var registrar = new SimpleInjectorRegistrar(container);
+			Assert.IsFalse(registrar.IsRegistrationClosed());
 
-			Assert.IsNotNull(registrations);
-			var info = registrations.First();
-			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			var implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
-			Assert.AreEqual(default, info.Profile);
+			container.Register<I1, C_I1>();
+			Assert.IsFalse(registrar.IsRegistrationClosed());
 
-			// test
-			registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var profile = new InterceptorProfile(new DummyInterceptor());
-			registrations = registrar
-				.Register<C_I1>(RegistryScope.Transient, profile)
-				.RegistrationsFor(typeof(C_I1));
-
-			Assert.IsNotNull(registrations);
-			info = registrations.First();
-			Assert.AreEqual(typeof(C_I1), info.ServiceType);
-			implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.AreEqual(profile, info.Profile);
-		}
-
-		[TestMethod]
-		public void Register_4_WithDuplicateRegistration_ShouldAddRegistration()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register<C_I1>(RegistryScope.Transient)
-				.Register<C_I1>(RegistryScope.Transient)
-				.RegistrationsFor(typeof(C_I1))
-				.ToArray();
-
-			Assert.AreEqual(2, registrations.Length);
-			Assert.AreEqual(registrations[0], registrations[1]);
-		}
-		#endregion
-
-		#region Register<TService, TImpl>(RegistryScope?, InterceptorProfile?);
-		[TestMethod]
-		public void Register_5_WithValidServiceType_ShouldRegister()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register<I1, C_I1>(RegistryScope.Transient, default)
-				.RegistrationsFor(typeof(I1));
-
-			Assert.IsNotNull(registrations);
-			var info = registrations.First();
-			Assert.AreEqual(typeof(I1), info.ServiceType);
-			var implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
-			Assert.AreEqual(default, info.Profile);
-
-			// test
-			registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var profile = new InterceptorProfile(new DummyInterceptor());
-			registrations = registrar
-				.Register<I1, C_I1>(RegistryScope.Transient, profile)
-				.RegistrationsFor(typeof(I1));
-
-			Assert.IsNotNull(registrations);
-			info = registrations.First();
-			Assert.AreEqual(typeof(I1), info.ServiceType);
-			implT = info.Implementation as IBindTarget.TypeTarget;
-			Assert.IsNotNull(implT);
-			Assert.AreEqual(typeof(C_I1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
-			Assert.AreEqual(profile, info.Profile);
-		}
-		#endregion
-
-		#region Register<TService>(Func<IResolverContract, TService>, RegistryScope?, InterceptorProfile?);
-
-		[TestMethod]
-		public void Register_6_WithValidArgs_ShouldRegister()
-		{
-			// test
-			var registrar = new SimpleInjectorRegistrar(new Container(),_mockProxyGenerator.Object);
-			var registrations = registrar
-				.Register(
-					new Func<IResolverContract, I1>(_r => new C_I1()),
-					RegistryScope.Transient)
-				.Register(
-					new Func<IResolverContract, I1>(_r => new C_I1_I2()),
-					RegistryScope.Singleton,
-					new InterceptorProfile(new DummyInterceptor()))
-				.RegistrationsFor(typeof(I1))
-				.ToArray();
-
-			Assert.AreEqual(2, registrations.Length);
-			Assert.AreEqual(RegistryScope.Singleton, registrations[1].Scope);
-		}
+			_ = container.GetInstance<I1>();
+			Assert.IsTrue(registrar.IsRegistrationClosed());
+        }
 		#endregion
 	}
 
-	public class DummyInterceptor : IInterceptor
+    public class DummyInterceptor : IInterceptor
     {
         public void Intercept(Castle.DynamicProxy.IInvocation invocation)
         {
@@ -311,35 +168,4 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
         }
     }
 
-    #region Test Types
-    public interface I1 { }
-
-	public interface I2 { }
-
-	public interface I3 { }
-
-
-	public interface I1A : I1 { }
-
-	public interface I2A : I2 { }
-
-	public interface I1I2A: I1, I2{}
-
-	public interface I1I2I3A : I1, I2, I3 { }
-
-
-	public class C_I1 : I1 { }
-
-	public class C_I2 : I2 { }
-
-	public class C_I3 : I3 { }
-
-	public class C_I1_I2 : I1, I2 { }
-
-	public class C_I1I2A : I1I2A { }
-
-	public class C_I1I2I3A : I1I2I3A { }
-
-	public class C_I1_I1A : I1, I1A { }
-	#endregion
 }

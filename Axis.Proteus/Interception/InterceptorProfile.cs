@@ -60,5 +60,7 @@ namespace Axis.Proteus.Interception
 		public static bool operator ==(InterceptorProfile first, InterceptorProfile second) => first.Equals(second);
 
 		public static bool operator !=(InterceptorProfile first, InterceptorProfile second) => !first.Equals(second);
+
+		public static implicit operator InterceptorProfile(IInterceptor[] interceptors) => new InterceptorProfile(interceptors);
 	}
 }

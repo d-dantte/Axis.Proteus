@@ -35,6 +35,7 @@ namespace Axis.Proteus.Test.IoC
         {
             var manifest = new RegistryManifest();
 
+            // default registrar
             Assert.ThrowsException<ArgumentException>(() => manifest.AddRootRegistration(default));
 
             var registration = new RegistrationInfo(
@@ -42,8 +43,10 @@ namespace Axis.Proteus.Test.IoC
                 IBindTarget.Of(typeof(C_I1_1)),
                 RegistryScope.Transient,
                 default);
-            manifest.AddRootRegistration(registration);
-            Assert.ThrowsException<DuplicateRegistrationException>(() => manifest.AddRootRegistration(registration));
+            Assert.ThrowsException<DuplicateRegistrationException>(() =>
+                manifest
+                    .AddRootRegistration(registration)
+                    .AddRootRegistration(registration));
         }
 
         [TestMethod]

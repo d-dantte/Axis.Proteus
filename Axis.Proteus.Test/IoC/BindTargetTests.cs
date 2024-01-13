@@ -1,5 +1,4 @@
 ﻿using Axis.Luna.Extensions;
-using Axis.Proteus.Exceptions;
 using Axis.Proteus.IoC;
 using Axis.Proteus.Test.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -21,7 +20,7 @@ namespace Axis.Proteus.Test.IoC
         [TestMethod]
         public void TypeTargetType_Constructor_WithInvalidArgs_ShouldCreateInstance()
         {
-            Assert.ThrowsException<ArgumentNullException>(() => IBindTarget.Of(null));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindTarget.Of((Type)null));
         }
 
         [TestMethod]
@@ -79,7 +78,7 @@ namespace Axis.Proteus.Test.IoC
         public void FactoryTarget_Constructor_WithValidArgs_ShouldCreateInstance()
         {
             Func<IResolverContract, I1> del = CreateC1;
-            var target = IBindTarget.Of(typeof(I1), del);
+            var target = IBindTarget.Of(del);
             Assert.IsNotNull(target);
             Assert.IsTrue(target is IBindTarget.FactoryTarget);
         }
@@ -87,17 +86,14 @@ namespace Axis.Proteus.Test.IoC
         [TestMethod]
         public void FactoryTarget_Constructor_WithInvalidArgs_ShouldCreateInstance()
         {
-            Func<IResolverContract, I1> del = CreateC1;
-            Assert.ThrowsException<ArgumentNullException>(() => IBindTarget.Of(null, del));
-            Assert.ThrowsException<ArgumentNullException>(() => IBindTarget.Of(typeof(I1), null));
-            Assert.ThrowsException<IncompatibleTypesException>(() => IBindTarget.Of(typeof(int), del));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindTarget.Of((Func<IResolverContract, object>)null));
         }
 
         [TestMethod]
         public void FactoryTarget_Type_ShouldHoldAssignedType()
         {
             Func<IResolverContract, I1> del = CreateC1;
-            var target = IBindTarget.Of(typeof(I1), del);
+            var target = IBindTarget.Of(del);
             Assert.AreEqual(typeof(I1), target.Type);
         }
 
@@ -105,8 +101,8 @@ namespace Axis.Proteus.Test.IoC
         public void FactoryTarget_Hashcode_ShouldBeEqualToHashcodeCombinedHashcode()
         {
             Func<IResolverContract, I1> del = CreateC1;
-            var target = IBindTarget.Of(typeof(I1), del).As<IBindTarget.FactoryTarget>();
-            Assert.AreEqual(HashCode.Combine(target.Type, target.Factory), target.GetHashCode());
+            var target = IBindTarget.Of(del).As<IBindTarget.FactoryTarget>();
+            Assert.AreEqual(HashCode.Combine(target.Factory), target.GetHashCode());
         }
 
         [TestMethod]
@@ -114,9 +110,9 @@ namespace Axis.Proteus.Test.IoC
         {
             Func<IResolverContract, I1> delI1 = CreateC1;
             Func<IResolverContract, I2> delI2 = CreateC2;
-            var target1 = (IBindTarget.FactoryTarget)IBindTarget.Of(typeof(I1), delI1);
-            var target2 = (IBindTarget.FactoryTarget)IBindTarget.Of(typeof(I2), delI2);
-            var target3 = (IBindTarget.FactoryTarget)IBindTarget.Of(typeof(I1), delI1);
+            var target1 = (IBindTarget.FactoryTarget)IBindTarget.Of(delI1);
+            var target2 = (IBindTarget.FactoryTarget)IBindTarget.Of(delI2);
+            var target3 = (IBindTarget.FactoryTarget)IBindTarget.Of(delI1);
             IBindTarget.FactoryTarget target4 = null;
 
             Assert.IsTrue(target1.Equals(target1));

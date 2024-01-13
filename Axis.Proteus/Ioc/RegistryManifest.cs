@@ -22,13 +22,13 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// Gets all the Collection types registered in this manifest
         /// </summary>
-        public Type[] CollectionServices() => _collectionManifest.Keys.ToArray();
+        public virtual Type[] CollectionServices() => _collectionManifest.Keys.ToArray();
 
         /// <summary>
         /// Gets all the <see cref="RegistrationInfo"/> instances registered against the given collection service type. Returns null if non have been registered
         /// </summary>
         /// <param name="collectionServiceType">The collection type</param>
-        public RegistrationInfo[] CollectionRegistrationsFor(Type collectionServiceType)
+        public virtual RegistrationInfo[] CollectionRegistrationsFor(Type collectionServiceType)
             => _collectionManifest.TryGetValue(collectionServiceType, out var registrations)
                 ? registrations.ToArray()
                 : null;
@@ -37,13 +37,13 @@ namespace Axis.Proteus.IoC
         /// Indicates if the given collection service type has been registered in this manifest
         /// </summary>
         /// <param name="collectionServiceType">The collection type</param>
-        public bool HasCollectionRegistrations(Type collectionServiceType) => _collectionManifest.ContainsKey(collectionServiceType);
+        public virtual bool HasCollectionRegistrations(Type collectionServiceType) => _collectionManifest.ContainsKey(collectionServiceType);
 
         /// <summary>
         /// Appends a new <see cref="RegistrationInfo"/> instance to the manifest. Duplicates are allowed.
         /// </summary>
         /// <param name="registrations">The registration info list</param>
-        public RegistryManifest AddCollectionRegistrations(params RegistrationInfo[] registrations)
+        public virtual RegistryManifest AddCollectionRegistrations(params RegistrationInfo[] registrations)
         {
             registrations?
                 .ThrowIf(ContainsDefault, new ArgumentException($"Invalid registration detected"))
@@ -65,14 +65,14 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// Gets all the root service types registered in this manifest
         /// </summary>
-        public Type[] RootServices() => _rootManifest.Keys.ToArray();
+        public virtual Type[] RootServices() => _rootManifest.Keys.ToArray();
 
 
         /// <summary>
         /// Gets the <see cref="RegistrationInfo"/> instance registered against the given root service type. Returns null if non have been registered
         /// </summary>
         /// <param name="rootServiceType">The root type</param>
-        public RegistrationInfo? RootRegistrationFor(Type rootServiceType)
+        public virtual RegistrationInfo? RootRegistrationFor(Type rootServiceType)
             => _rootManifest.TryGetValue(rootServiceType, out var registration)
                 ? registration
                 : (RegistrationInfo?) null;
@@ -82,14 +82,14 @@ namespace Axis.Proteus.IoC
         /// Indicates if the given root service type has been registered in this manifest
         /// </summary>
         /// <param name="rootServiceType">The collection type</param>
-        public bool HasRootRegistration(Type rootServiceType) => _rootManifest.ContainsKey(rootServiceType);
+        public virtual bool HasRootRegistration(Type rootServiceType) => _rootManifest.ContainsKey(rootServiceType);
 
         /// <summary>
         /// Adds a new <see cref="RegistrationInfo"/> instance to the manifest. Duplicates are not allowed.
         /// </summary>
         /// <param name="registration">The registration instance</param>
         /// <exception cref="DuplicateRegistrationException"></exception>
-        public RegistryManifest AddRootRegistration(RegistrationInfo registration)
+        public virtual RegistryManifest AddRootRegistration(RegistrationInfo registration)
         {
             if (registration == default)
                 throw new ArgumentException($"Invalid registration supplied: {registration}");

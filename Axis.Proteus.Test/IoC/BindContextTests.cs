@@ -39,7 +39,7 @@ namespace Axis.Proteus.Test.IoC
         public void DefaultContext_EqualityTest()
         {
             IBindTarget target = IBindTarget.Of(typeof(string));
-            IBindTarget target2 = IBindTarget.Of(typeof(I1), new Func<IResolverContract, I1>(r => new C_I1_1()));
+            IBindTarget target2 = IBindTarget.Of(new Func<IResolverContract, I1>(r => new C_I1_1()));
 
             var context1 = IBindContext.Of(target).As<IBindContext.DefaultContext>();
             var context2 = IBindContext.Of(target2).As<IBindContext.DefaultContext>();
@@ -116,7 +116,7 @@ namespace Axis.Proteus.Test.IoC
         public void NamedContext_EqualityTest()
         {
             IBindTarget target = IBindTarget.Of(typeof(string));
-            IBindTarget target2 = IBindTarget.Of(typeof(I1), new Func<IResolverContract, I1>(r => new C_I1_1()));
+            IBindTarget target2 = IBindTarget.Of(new Func<IResolverContract, I1>(r => new C_I1_1()));
 
             var context1 = IBindContext.Of("context", target).As<IBindContext.NamedContext>();
             var context2 = IBindContext.Of("context", target2).As<IBindContext.NamedContext>();
@@ -156,9 +156,8 @@ namespace Axis.Proteus.Test.IoC
         public void ParameterContext_Construction_WithValidArgs_ShouldContructInstance()
         {
             var target = IBindTarget.Of(typeof(C_I1_1));
-            var context = IBindContext.Of(
+            var context = IBindContext.OfParameter(
                 target: target,
-                parameter: GetClass1ConstructorParameter(),
                 predicate: pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)));
             Assert.IsNotNull(context);
             Assert.IsTrue(context is IBindContext.ParameterContext);
@@ -171,45 +170,28 @@ namespace Axis.Proteus.Test.IoC
             var parameter = GetClass1ConstructorParameter();
             var predicate = new Func<ParameterInfo, bool>(pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)));
 
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(null, target, predicate));
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(parameter, null, predicate));
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(parameter, target, null));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.OfParameter(null, predicate));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.OfParameter(target, null));
         }
 
         [TestMethod]
         public void ParameterContext_Target_ShouldContainAssignedTarget()
         {
             var target = IBindTarget.Of(typeof(string));
-            var context = IBindContext.Of(
+            var context = IBindContext.OfParameter(
                 target: target,
-                parameter: GetClass1ConstructorParameter(),
                 predicate: pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)));
 
             Assert.AreEqual(target, context.Target);
         }
 
         [TestMethod]
-        public void ParameterContext_Parameter_ShouldContainAssignedTarget()
-        {
-            var parameter = GetClass1ConstructorParameter();
-            var context = IBindContext
-                .Of(
-                    target: IBindTarget.Of(typeof(string)),
-                    parameter: parameter,
-                    predicate: pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)))
-                .As<IBindContext.ParameterContext>();
-
-            Assert.AreEqual(parameter, context.Parameter);
-        }
-
-        [TestMethod]
-        public void ParameterContext_Predicate_ShouldContainAssignedTarget()
+        public void ParameterContext_Predicate_ShouldContainAssignedPredicate()
         {
             var predicate = new Func<ParameterInfo, bool>(pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)));
             var context = IBindContext
-                .Of(
+                .OfParameter(
                     target: IBindTarget.Of(typeof(string)),
-                    parameter: GetClass1ConstructorParameter(),
                     predicate: predicate)
                 .As<IBindContext.ParameterContext>();
 
@@ -220,26 +202,23 @@ namespace Axis.Proteus.Test.IoC
         public void ParameterContext_EqualityTest()
         {
             IBindTarget target = IBindTarget.Of(typeof(string));
-            IBindTarget target2 = IBindTarget.Of(typeof(I1), new Func<IResolverContract, I1>(r => new C_I1_1()));
+            IBindTarget target2 = IBindTarget.Of(new Func<IResolverContract, I1>(r => new C_I1_1()));
 
             var predicate = new Func<ParameterInfo, bool>(pinfo => pinfo.Member.DeclaringType.Equals(typeof(Class1)));
 
             var context1 = IBindContext
-                .Of(
+                .OfParameter(
                     target: target,
-                    parameter: GetClass1ConstructorParameter(),
                     predicate: predicate)
                 .As<IBindContext.ParameterContext>();
             var context2 = IBindContext
-                .Of(
+                .OfParameter(
                     target: target2,
-                    parameter: GetClass1ConstructorParameter(),
                     predicate: predicate)
                 .As<IBindContext.ParameterContext>();
             var context3 = IBindContext
-                .Of(
+                .OfParameter(
                     target: target,
-                    parameter: GetClass1ConstructorParameter(),
                     predicate: predicate)
                 .As<IBindContext.ParameterContext>();
             IBindContext.ParameterContext context4 = null;
@@ -278,9 +257,8 @@ namespace Axis.Proteus.Test.IoC
         public void PropertyContext_Construction_WithValidArgs_ShouldContructInstance()
         {
             var target = IBindTarget.Of(typeof(C_I1_1));
-            var context = IBindContext.Of(
+            var context = IBindContext.OfProperty(
                 target: target,
-                property: GetClass1Property(),
                 predicate: pinfo => pinfo.DeclaringType.Equals(typeof(Class1)));
             Assert.IsNotNull(context);
             Assert.IsTrue(context is IBindContext.PropertyContext);
@@ -293,35 +271,19 @@ namespace Axis.Proteus.Test.IoC
             var property = GetClass1Property();
             var predicate = new Func<PropertyInfo, bool>(pinfo => pinfo.DeclaringType.Equals(typeof(Class1)));
 
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(null, target, predicate));
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(property, null, predicate));
-            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.Of(property, target, null));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.OfProperty(null, predicate));
+            Assert.ThrowsException<ArgumentNullException>(() => IBindContext.OfProperty(target, null));
         }
 
         [TestMethod]
         public void PropertyContext_Target_ShouldContainAssignedTarget()
         {
             var target = IBindTarget.Of(typeof(string));
-            var context = IBindContext.Of(
+            var context = IBindContext.OfProperty(
                 target: target,
-                property: GetClass1Property(),
                 predicate: pinfo => pinfo.DeclaringType.Equals(typeof(Class1)));
 
             Assert.AreEqual(target, context.Target);
-        }
-
-        [TestMethod]
-        public void PropertyContext_Property_ShouldContainAssignedTarget()
-        {
-            var property = GetClass1Property();
-            var context = IBindContext
-                .Of(
-                    target: IBindTarget.Of(typeof(string)),
-                    property: property,
-                    predicate: pinfo => pinfo.DeclaringType.Equals(typeof(Class1)))
-                .As<IBindContext.PropertyContext>();
-
-            Assert.AreEqual(property, context.Property);
         }
 
         [TestMethod]
@@ -329,9 +291,8 @@ namespace Axis.Proteus.Test.IoC
         {
             var predicate = new Func<PropertyInfo, bool>(pinfo => pinfo.DeclaringType.Equals(typeof(Class1)));
             var context = IBindContext
-                .Of(
+                .OfProperty(
                     target: IBindTarget.Of(typeof(string)),
-                    property: GetClass1Property(),
                     predicate: predicate)
                 .As<IBindContext.PropertyContext>();
 
@@ -342,26 +303,23 @@ namespace Axis.Proteus.Test.IoC
         public void PropertyContext_EqualityTest()
         {
             IBindTarget target = IBindTarget.Of(typeof(string));
-            IBindTarget target2 = IBindTarget.Of(typeof(I1), new Func<IResolverContract, I1>(r => new C_I1_1()));
+            IBindTarget target2 = IBindTarget.Of(new Func<IResolverContract, I1>(r => new C_I1_1()));
 
             var predicate = new Func<PropertyInfo, bool>(pinfo => pinfo.DeclaringType.Equals(typeof(Class1)));
 
             var context1 = IBindContext
-                .Of(
+                .OfProperty(
                     target: target,
-                    property: GetClass1Property(),
                     predicate: predicate)
                 .As<IBindContext.PropertyContext>();
             var context2 = IBindContext
-                .Of(
+                .OfProperty(
                     target: target2,
-                    property: GetClass1Property(),
                     predicate: predicate)
                 .As<IBindContext.PropertyContext>();
             var context3 = IBindContext
-                .Of(
+                .OfProperty(
                     target: target,
-                    property: GetClass1Property(),
                     predicate: predicate)
                 .As<IBindContext.PropertyContext>();
             IBindContext.PropertyContext context4 = null;
