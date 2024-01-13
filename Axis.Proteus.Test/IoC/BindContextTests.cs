@@ -44,7 +44,7 @@ namespace Axis.Proteus.Test.IoC
             var context1 = IBindContext.Of(target).As<IBindContext.DefaultContext>();
             var context2 = IBindContext.Of(target2).As<IBindContext.DefaultContext>();
             var context3 = IBindContext.Of(target).As<IBindContext.DefaultContext>();
-            IBindContext.DefaultContext context4 = null;
+            IBindContext.DefaultContext context4 = default;
 
             Assert.IsTrue(context1.Equals(context1));
 #pragma warning disable CS1718 // Comparison made to same variable
@@ -121,7 +121,7 @@ namespace Axis.Proteus.Test.IoC
             var context1 = IBindContext.Of("context", target).As<IBindContext.NamedContext>();
             var context2 = IBindContext.Of("context", target2).As<IBindContext.NamedContext>();
             var context3 = IBindContext.Of("context", target).As<IBindContext.NamedContext>();
-            IBindContext.NamedContext context4 = null;
+            IBindContext.NamedContext context4 = default;
 
             Assert.IsTrue(context1.Equals(context1));
 #pragma warning disable CS1718 // Comparison made to same variable
@@ -221,7 +221,7 @@ namespace Axis.Proteus.Test.IoC
                     target: target,
                     predicate: predicate)
                 .As<IBindContext.ParameterContext>();
-            IBindContext.ParameterContext context4 = null;
+            IBindContext.ParameterContext context4 = default;
 
             Assert.IsTrue(context1.Equals(context1));
 #pragma warning disable CS1718 // Comparison made to same variable
@@ -322,7 +322,7 @@ namespace Axis.Proteus.Test.IoC
                     target: target,
                     predicate: predicate)
                 .As<IBindContext.PropertyContext>();
-            IBindContext.PropertyContext context4 = null;
+            IBindContext.PropertyContext context4 = default;
 
             Assert.IsTrue(context1.Equals(context1));
 #pragma warning disable CS1718 // Comparison made to same variable

@@ -54,7 +54,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Functional
                 serviceType: typeof(I1),
                 scope: RegistryScope.Transient,
                 profile: default,
-                factory: new Func<IResolverContract,I1>(_resolver => new C1_I1()));
+                factory: new Func<IResolverContract, I1>(_resolver => new C1_I1()));
             resolver = publicRegistrar.BuildResolver();
 
             service = resolver.Resolve(typeof(I1));

@@ -26,10 +26,12 @@ namespace Axis.Proteus.SimpleInjector.Test
                 {
                     var registration = new TypeMap(producer.ServiceType, producer.ImplementationType);
 
-                    return registration.Concat(producer
-                        .GetRelationships()
-                        .Select(r => r.Dependency)
-                        .FlattenRegistrations());
+                    return registration
+                        .Enumerate()
+                        .Concat(producer
+                            .GetRelationships()
+                            .Select(r => r.Dependency)
+                            .FlattenRegistrations());
                 })
                 .Distinct()
                 .ToArray();

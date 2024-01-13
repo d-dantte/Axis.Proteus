@@ -8,9 +8,9 @@ namespace Axis.Proteus.IoC
 {
     public class RegistryManifest
     {
-        private readonly Dictionary<Type, List<RegistrationInfo>> _collectionManifest = new Dictionary<Type, List<RegistrationInfo>>();
+        private readonly Dictionary<Type, List<RegistrationInfo>> _collectionManifest = new();
 
-        private readonly Dictionary<Type, RegistrationInfo> _rootManifest = new Dictionary<Type, RegistrationInfo>();
+        private readonly Dictionary<Type, RegistrationInfo> _rootManifest = new();
 
         #region Construction
         public RegistryManifest()
@@ -46,7 +46,7 @@ namespace Axis.Proteus.IoC
         public virtual RegistryManifest AddCollectionRegistrations(params RegistrationInfo[] registrations)
         {
             registrations?
-                .ThrowIf(ContainsDefault, new ArgumentException($"Invalid registration detected"))
+                .ThrowIf(ContainsDefault, _ => new ArgumentException($"Invalid registration detected"))
                 .ForAll(registration =>
                 {
                     _collectionManifest
@@ -102,7 +102,8 @@ namespace Axis.Proteus.IoC
 
         #endregion
 
-        private static bool ContainsDefault(IEnumerable<RegistrationInfo> registrations)
+        private static bool ContainsDefault(
+            IEnumerable<RegistrationInfo> registrations)
             => registrations.Any(registration => default == registration);
     }
 }

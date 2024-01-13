@@ -9,7 +9,7 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// A pattern to which resolution context names must adhere
         /// </summary>
-        public static readonly Regex ContextNamePattern = new Regex("^[a-zA-Z_]\\w*$");
+        public static readonly Regex ContextNamePattern = new("^[a-zA-Z_]\\w*$");
 
         /// <summary>
         /// The context name
@@ -21,10 +21,10 @@ namespace Axis.Proteus.IoC
             Name = name
                 .ThrowIf(
                     string.IsNullOrWhiteSpace,
-                    new ArgumentException($"invalid {nameof(name)} supplied"))
+                    _ => new ArgumentException($"Invalid {nameof(name)}: null/whitespace"))
                 .ThrowIf(
                     n => !ContextNamePattern.IsMatch(n),
-                    new ArgumentException($"invalid context name supplied: {name}. Context name must match the pattern: {ContextNamePattern}"));
+                    _ => new ArgumentException($"Invalid {nameof(name)}: does not match pattern '{ContextNamePattern}'"));
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Axis.Proteus.IoC
         public override bool Equals(object obj)
         {
             return obj is ResolutionContextName other
-                && other.Name.NullOrTrue(
+                && other.Name.IsNullOrTrue(
                     Name,
                     (n1, n2) => n1.Equals(n2, StringComparison.InvariantCulture));
         }

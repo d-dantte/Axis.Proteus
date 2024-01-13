@@ -6,17 +6,17 @@ namespace Axis.Proteus.IoC
     /// <summary>
     /// Registry Scope
     /// </summary>
-    public struct RegistryScope
+    public readonly struct RegistryScope
     {
         /// <summary>
         /// Singleton scope
         /// </summary>
-        public static readonly RegistryScope Singleton = new RegistryScope("Singleton");
+        public static readonly RegistryScope Singleton = new("Singleton");
 
         /// <summary>
         /// Named-scope.
         /// </summary>
-        public static readonly RegistryScope DefaultScope = new RegistryScope("DefaultScope");
+        public static readonly RegistryScope DefaultScope = new("DefaultScope");
 
         /// <summary>
         /// Transient scope
@@ -39,7 +39,7 @@ namespace Axis.Proteus.IoC
         {
             _name = name.ThrowIf(
                 string.IsNullOrWhiteSpace,
-                new ArgumentNullException(nameof(name)));
+                _ => new ArgumentNullException(nameof(name)));
         }
 
         /// <inheritdoc/>
@@ -57,7 +57,7 @@ namespace Axis.Proteus.IoC
 
         public static implicit operator string(RegistryScope scope) => scope.Name;
 
-        public static implicit operator RegistryScope(string scope) => new RegistryScope(scope);
+        public static implicit operator RegistryScope(string scope) => new(scope);
 
         public static bool operator ==(RegistryScope first, RegistryScope second) => first.Equals(second);
         public static bool operator !=(RegistryScope first, RegistryScope second) => !first.Equals(second);

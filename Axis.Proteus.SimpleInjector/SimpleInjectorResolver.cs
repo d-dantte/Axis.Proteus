@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Axis.Proteus.SimpleInjector
 {
-    public class SimpleInjectorResolver : IResolverContract
+    public sealed class SimpleInjectorResolver : IResolverContract
     {
         private readonly Container _container;
         private readonly IProxyGenerator _proxyGenerator;
@@ -46,7 +46,7 @@ namespace Axis.Proteus.SimpleInjector
                 : (_container.GetInstance(serviceType), registration.Value.DefaultContext);
 
             if (instance == null
-                || registration.Value.Profile == default)
+                || registration.Value.Profile.IsDefault)
                 return instance;
 
             if (context.Target is IBindTarget.TypeTarget typeTarget
@@ -86,19 +86,21 @@ namespace Axis.Proteus.SimpleInjector
                     if (instance == null)
                         return null;
 
-                    var info = pair.Item1.ThrowIfDefault(
-                        new InvalidOperationException($"Invalid registration found at index: {index}, for service {serviceType}"));
+                    var info = pair.Item1.ThrowIfDefault(_ => new InvalidOperationException(
+                        $"Invalid registration found at index: {index}, for service {serviceType}"));
 
                     if (info.Profile == default)
                         return instance;
 
                     if (info.DefaultContext.Target is IBindTarget.TypeTarget typeTarget
                         && !typeTarget.Type.IsAssignableFrom(instance.GetType()))
-                        throw new InvalidOperationException($"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
+                        throw new InvalidOperationException(
+                            $"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
 
                     else if (info.DefaultContext.Target is IBindTarget.FactoryTarget factoryTarget
                         && !factoryTarget.Type.IsAssignableFrom(instance.GetType()))
-                        throw new InvalidOperationException($"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
+                        throw new InvalidOperationException(
+                            $"Registration mis-match: registration type: {info.DefaultContext.Target.Type}, resolved type: {instance.GetType()}");
 
                     return serviceType.IsClass
                         ? _proxyGenerator

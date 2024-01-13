@@ -27,9 +27,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axis.Proteus.SimpleInjector
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{A1846B1B-2E6E-4415-8950-92FE6A2FB280}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.SimpleInjector.Tests", "Axis.SimpleInjector.Tests\Axis.SimpleInjector.Tests.csproj", "{78EEAAEA-2487-445A-B1E2-DFD136511E24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axis.SimpleInjector.Tests", "Axis.SimpleInjector.Tests\Axis.SimpleInjector.Tests.csproj", "{78EEAAEA-2487-445A-B1E2-DFD136511E24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis.Castle.Tests", "Axis.Castle.Tests\Axis.Castle.Tests.csproj", "{BBF63E85-5327-4F61-9CA8-D9ACE1E6E357}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axis.Castle.Tests", "Axis.Castle.Tests\Axis.Castle.Tests.csproj", "{BBF63E85-5327-4F61-9CA8-D9ACE1E6E357}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github.workflows", ".github.workflows", "{121A250F-53E3-4113-82B7-C75F3F010991}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yaml = .github\workflows\ci.yaml
+		.github\workflows\pre-release.yaml = .github\workflows\pre-release.yaml
+		.github\workflows\release.yaml = .github\workflows\release.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -12,7 +12,7 @@ namespace Axis.Proteus.Exceptions
 		public IncompatibleTypesException(
 			Type serviceType,
 			Type implementationType)
-			: base($"The service type: {serviceType} is not assignable from the supplied implementation type: {implementationType}")
+			: base($"Invalid registration: service type '{serviceType}' is not assignable from the supplied implementation type '{implementationType}'")
 		{
 			ServiceType = serviceType;
 			ImplementationType = implementationType;

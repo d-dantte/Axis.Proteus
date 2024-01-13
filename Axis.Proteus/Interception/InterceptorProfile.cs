@@ -1,4 +1,5 @@
-﻿using Axis.Luna.Extensions;
+﻿using Axis.Luna.Common;
+using Axis.Luna.Extensions;
 using Castle.DynamicProxy;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,8 @@ namespace Axis.Proteus.Interception
 	/// Represents an ordered set of interceptors that are attached to instances generated for types registered with interceptors.
 	/// The interceptors are executed in the order they are given in this struct.
 	/// </summary>
-	public struct InterceptorProfile
+	public readonly struct InterceptorProfile:
+		IDefaultValueProvider<InterceptorProfile>
 	{
 		private readonly IInterceptor[] _interceptors;
 		private readonly int _hashCode;
@@ -22,13 +24,17 @@ namespace Axis.Proteus.Interception
 		/// </summary>
 		public IEnumerable<IInterceptor> Interceptors => _interceptors.AsEnumerable() ?? Enumerable.Empty<IInterceptor>();
 
-		public InterceptorProfile(IEnumerable<IInterceptor> interceptors)
+		public bool IsDefault => _interceptors is null && _hashCode == 0;
+
+		public static InterceptorProfile Default => default;
+
+        public InterceptorProfile(IEnumerable<IInterceptor> interceptors)
 		{
 			_interceptors = interceptors
-				.ThrowIfNull(new ArgumentNullException(nameof(interceptors)))
+				.ThrowIfNull(() => new ArgumentNullException(nameof(interceptors)))
 				.ToArray()
-				.ThrowIf(ContainsNull, new ArgumentException("Null Interceptor found"))
-				.ThrowIf(IsEmpty, new ArgumentException("Interceptor list cannot be empty"));
+				.ThrowIf(ContainsNull, _ => new ArgumentException("Null Interceptor found"))
+				.ThrowIf(IsEmpty, _ => new ArgumentException("Interceptor list cannot be empty"));
 
 			_hashCode = ValueHash(_interceptors);
 		}
@@ -52,7 +58,7 @@ namespace Axis.Proteus.Interception
 		{
 			return obj is InterceptorProfile other
 				&& _hashCode == other._hashCode
-				&& _interceptors.NullOrTrue(
+				&& _interceptors.IsNullOrTrue(
 					other._interceptors,
 					Enumerable.SequenceEqual);
 		}

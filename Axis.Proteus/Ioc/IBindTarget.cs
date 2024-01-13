@@ -51,8 +51,8 @@ namespace Axis.Proteus.IoC
                     && other.Type.Equals(Type);
             }
 
-            public static bool operator ==(TypeTarget first, TypeTarget second) => first.NullOrEquals(second);
-            public static bool operator !=(TypeTarget first, TypeTarget second) => !first.NullOrEquals(second);
+            public static bool operator ==(TypeTarget first, TypeTarget second) => first.IsNullOrEquals(second);
+            public static bool operator !=(TypeTarget first, TypeTarget second) => !first.IsNullOrEquals(second);
         }
 
         /// <summary>
@@ -86,8 +86,8 @@ namespace Axis.Proteus.IoC
                     && other.Factory.Equals(Factory);
             }
 
-            public static bool operator ==(FactoryTarget first, FactoryTarget second) => first.NullOrEquals(second);
-            public static bool operator !=(FactoryTarget first, FactoryTarget second) => !first.NullOrEquals(second);
+            public static bool operator ==(FactoryTarget first, FactoryTarget second) => first.IsNullOrEquals(second);
+            public static bool operator !=(FactoryTarget first, FactoryTarget second) => !first.IsNullOrEquals(second);
         }
         #endregion
     }

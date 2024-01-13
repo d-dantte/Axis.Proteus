@@ -1,4 +1,5 @@
-﻿using Axis.Luna.Extensions;
+﻿using Axis.Luna.Common;
+using Axis.Luna.Extensions;
 using System;
 using System.Reflection;
 
@@ -17,7 +18,7 @@ namespace Axis.Proteus.IoC
     ///         <see cref="NamedContext"/>: This specifies conditions in the context of resolving the type directly from the IoC container.
     ///     </item>
     ///     <item>
-    ///         <see cref="DefaultContext"/>: When there is no other context present this is used. This context MUST be present. It is only ever created internally by the
+    ///         <see cref="DefaultContext"/>: When there is no other context present, this is used. This context MUST be present. It is only ever created internally by the
     ///         <see cref="RegistrationInfo"/> instance upon creation.
     ///     </item>
     /// </list>
@@ -72,9 +73,15 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// The default context. There must be only one of these in any <see cref="RegistrationInfo"/> instance.
         /// </summary>
-        public class DefaultContext : IBindContext
+        public readonly struct DefaultContext :
+            IBindContext,
+            IDefaultValueProvider<DefaultContext>
         {
             public IBindTarget Target { get; }
+
+            public bool IsDefault => Target is null;
+
+            public static DefaultContext Default => default;
 
             internal DefaultContext(IBindTarget target)
             {
@@ -86,7 +93,7 @@ namespace Axis.Proteus.IoC
             public override bool Equals(object obj)
             {
                 return obj is DefaultContext other
-                    && other.Target.Equals(Target); // Target MUST never be null
+                    && Target.IsNullOrEquals(other.Target);
             }
 
             public static bool operator ==(DefaultContext first, DefaultContext second) => first.NullOrEquals(second);
@@ -94,12 +101,12 @@ namespace Axis.Proteus.IoC
             public static bool operator !=(DefaultContext first, DefaultContext second) => !first.NullOrEquals(second);
 
 
-            public static implicit operator DefaultContext(IBindTarget.FactoryTarget target) => new DefaultContext(target);
+            public static implicit operator DefaultContext(IBindTarget.FactoryTarget target) => new(target);
 
-            public static implicit operator DefaultContext(IBindTarget.TypeTarget target) => new DefaultContext(target);
+            public static implicit operator DefaultContext(IBindTarget.TypeTarget target) => new(target);
         }
 
-        public class NamedContext : IBindContext
+        public readonly struct NamedContext : IBindContext
         {
             public IBindTarget Target { get; }
 
@@ -119,7 +126,7 @@ namespace Axis.Proteus.IoC
             public override bool Equals(object obj)
             {
                 return obj is NamedContext other
-                    && other.Target.Equals(Target)
+                    && Target.IsNullOrEquals(other.Target)
                     && other.Name.Equals(Name);
             }
 
@@ -127,7 +134,9 @@ namespace Axis.Proteus.IoC
             public static bool operator !=(NamedContext first, NamedContext second) => !first.NullOrEquals(second);
         }
 
-        public class ParameterContext : IBindContext
+        public readonly struct ParameterContext :
+            IBindContext,
+            IDefaultValueProvider<ParameterContext>
         {
             public IBindTarget Target { get; }
 
@@ -135,6 +144,10 @@ namespace Axis.Proteus.IoC
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<ParameterInfo, bool> Predicate { get; }
+
+            public bool IsDefault => Predicate is null && Target is null;
+
+            public static ParameterContext Default => default;
 
             internal ParameterContext(
                 IBindTarget target,
@@ -149,15 +162,17 @@ namespace Axis.Proteus.IoC
             public override bool Equals(object obj)
             {
                 return obj is ParameterContext other
-                    && other.Target.Equals(Target)
-                    && other.Predicate.Equals(Predicate);
+                    && Target.IsNullOrEquals(other.Target)
+                    && Predicate.IsNullOrEquals(other.Predicate);
             }
 
             public static bool operator ==(ParameterContext first, ParameterContext second) => first.NullOrEquals(second);
             public static bool operator !=(ParameterContext first, ParameterContext second) => !first.NullOrEquals(second);
         }
 
-        public class PropertyContext : IBindContext
+        public readonly struct PropertyContext :
+            IBindContext,
+            IDefaultValueProvider<PropertyContext>
         {
             public IBindTarget Target { get; }
 
@@ -165,6 +180,10 @@ namespace Axis.Proteus.IoC
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<PropertyInfo, bool> Predicate { get; }
+
+            public bool IsDefault => Predicate is null && Target is null;
+
+            public static PropertyContext Default => default;
 
             internal PropertyContext(
                 IBindTarget target,
@@ -179,8 +198,8 @@ namespace Axis.Proteus.IoC
             public override bool Equals(object obj)
             {
                 return obj is PropertyContext other
-                    && other.Target.Equals(Target)
-                    && other.Predicate.Equals(Predicate);
+                    && Target.IsNullOrEquals(other.Target)
+                    && Predicate.IsNullOrEquals(other.Predicate);
             }
 
             public static bool operator ==(PropertyContext first, PropertyContext second) => first.NullOrEquals(second);

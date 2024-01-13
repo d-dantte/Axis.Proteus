@@ -17,7 +17,7 @@ namespace Axis.Proteus.SimpleInjector
     /// be registered with the same container unless it is another conditional registration - a restriction imposed by SimpleInjector.
     /// </para>
     /// </summary>
-    public class SimpleInjectorRegistrar : AbstractRegistrar
+    public sealed class SimpleInjectorRegistrar : AbstractRegistrar
     {
         private readonly Container _container;
         private readonly IProxyGenerator _proxyGenerator;
@@ -56,27 +56,27 @@ namespace Axis.Proteus.SimpleInjector
                         $"The registration info for the given service type ({serviceType}) cannot be found.");
 
                 var contexts = rootRegistration.BindContexts;
-                if(contexts.Length == 1)
-                    BindDefaultContext(rootRegistration, contexts[0] as IBindContext.DefaultContext);
+                if (contexts.Length == 1)
+                    BindDefaultContext(rootRegistration, contexts[0].As<IBindContext.DefaultContext>());
 
                 else foreach (var context in rootRegistration.BindContexts.Reverse())
-                {
-                    // the default context should always come last, hence the "Reverse()" action applied above.
-                    if(context is IBindContext.DefaultContext defaultContext)
-                        BindDefaultContextConditionally(rootRegistration, defaultContext);
+                    {
+                        // the default context should always come last, hence the "Reverse()" action applied above.
+                        if (context is IBindContext.DefaultContext defaultContext)
+                            BindDefaultContextConditionally(rootRegistration, defaultContext);
 
-                    else if(context is IBindContext.ParameterContext paramContext)
-                        BindParameterContext(rootRegistration, paramContext);
+                        else if (context is IBindContext.ParameterContext paramContext)
+                            BindParameterContext(rootRegistration, paramContext);
 
-                    else if (context is IBindContext.PropertyContext propContext)
-                        BindPropertyContext(rootRegistration, propContext);
+                        else if (context is IBindContext.PropertyContext propContext)
+                            BindPropertyContext(rootRegistration, propContext);
 
-                    else if(context is IBindContext.NamedContext namedContext)
-                        BindNamedContext(rootRegistration, namedContext);
+                        else if (context is IBindContext.NamedContext namedContext)
+                            BindNamedContext(rootRegistration, namedContext);
 
-                    else
-                        throw new InvalidOperationException($"Invalid context type: {context?.GetType()}");
-                }
+                        else
+                            throw new InvalidOperationException($"Invalid context type: {context?.GetType()}");
+                    }
             }
 
             // register collection types
@@ -144,7 +144,6 @@ namespace Axis.Proteus.SimpleInjector
                     {
                         // resolve the target instance.
                         var instance = namedFactoryTarget.Factory
-                            .As<Func<IResolverContract, object>>()
                             .ApplyTo(CreateResolverInjectedInstanceProducer)
                             .Invoke();
 
@@ -154,7 +153,7 @@ namespace Axis.Proteus.SimpleInjector
             }
 
             else
-                throw new InvalidOperationException("Invalid target type: " + namedContext.Target?.GetType());
+                throw new InvalidOperationException($"Invalid target type: {namedContext.Target?.GetType()}");
         }
 
         private void BindPropertyContext(RegistrationInfo rootRegistration, IBindContext.PropertyContext propContext)
@@ -175,9 +174,8 @@ namespace Axis.Proteus.SimpleInjector
                         .CreateRegistration(
                             serviceType: rootRegistration.ServiceType,
                             container: _container,
-                            instanceCreator: propFactoryTarget.Factory
-                                .As<Func<IResolverContract, object>>()
-                                .ApplyTo(CreateResolverInjectedInstanceProducer)));
+                            instanceCreator: propFactoryTarget.Factory.ApplyTo(
+                                CreateResolverInjectedInstanceProducer)));
 
             else
                 throw new InvalidOperationException("Invalid target type: " + propContext.Target?.GetType());
@@ -201,9 +199,8 @@ namespace Axis.Proteus.SimpleInjector
                         .CreateRegistration(
                             serviceType: rootRegistration.ServiceType,
                             container: _container,
-                            instanceCreator: paramFactoryTarget.Factory
-                                .As<Func<IResolverContract, object>>()
-                                .ApplyTo(CreateResolverInjectedInstanceProducer)));
+                            instanceCreator: paramFactoryTarget.Factory.ApplyTo(
+                                CreateResolverInjectedInstanceProducer)));
 
             else
                 throw new InvalidOperationException("Invalid target type: " + paramContext.Target?.GetType());
@@ -221,9 +218,7 @@ namespace Axis.Proteus.SimpleInjector
                 _container.Register(
                     serviceType: rootRegistration.ServiceType,
                     lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle(),
-                    instanceCreator: factoryTarget.Factory
-                        .As<Func<IResolverContract, object>>()
-                        .ApplyTo(CreateResolverInjectedInstanceProducer));
+                    instanceCreator: factoryTarget.Factory.ApplyTo(CreateResolverInjectedInstanceProducer));
 
             else
                 throw new InvalidOperationException("Invalid target type: " + context.Target?.GetType());
@@ -249,9 +244,8 @@ namespace Axis.Proteus.SimpleInjector
                         .CreateRegistration(
                             serviceType: rootRegistration.ServiceType,
                             container: _container,
-                            instanceCreator: factoryTarget.Factory
-                                .As<Func<IResolverContract, object>>()
-                                .ApplyTo(CreateResolverInjectedInstanceProducer)));
+                            instanceCreator: factoryTarget.Factory.ApplyTo(
+                                CreateResolverInjectedInstanceProducer)));
         }
 
         private void BindCollectionDefaultContext(RegistrationInfo registration)
@@ -270,22 +264,21 @@ namespace Axis.Proteus.SimpleInjector
                         .CreateRegistration(
                             serviceType: registration.ServiceType,
                             container: _container,
-                            instanceCreator: factoryTarget.Factory
-                                .As<Func<IResolverContract, object>>()
-                                .ApplyTo(CreateResolverInjectedInstanceProducer)));
+                            instanceCreator: factoryTarget.Factory.ApplyTo(
+                                CreateResolverInjectedInstanceProducer)));
 
             else
                 throw new InvalidOperationException($"Invalid default binding context: {registration.DefaultContext.Target}");
         }
         #endregion
 
-        private Type GetReplacementTypeForNamedContext(
+        private static Type GetReplacementTypeForNamedContext(
             ResolutionContextName contextName,
             Type serviceType,
             Type implType)
             => DynamicTypeUtil.ToNamedContextReplacementType(contextName, serviceType, implType);
 
-        private (Type containerType, Func<object, NamedContextContainerBase> instanceProducer) GetNamedContextContainerType(
+        private static (Type containerType, Func<object, NamedContextContainerBase> instanceProducer) GetNamedContextContainerType(
             ResolutionContextName contextName,
             Type serviceType,
             Type implType)

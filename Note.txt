@@ -13,6 +13,7 @@
 	1. Resolve will now revert to using Container.GetInstance
 	2. ResolveAll will use Container.GetAllInstances because IRegistrarContract.RegisterAll will use Container.Collection.Append
 	3. Registrations are no longer stackable
+	[DONE]
 
  2. Possible future feature: support contextual/conditional registration. Rather than use an InjectorContext that provides only Injection-target
     info (like simpleInjector),  we will pass in a context that can take 3 different forms
@@ -21,4 +22,5 @@
 	3. NamedInjection - this is a name that, when supplied to the IResolverContract along with the intended service type, will retrieve the
 	   specific implementation that was mapped to that named injection context. This can be implemented as using a dynamically created class with a
 	   single contstuctor, taking the given implementation(s). This dynamically created class is what will be registered in SimpleInjector, while
-	   the IRegristrarContract's manifest will maintain information about the NamedInjection. 
+	   the IRegristrarContract's manifest will maintain information about the NamedInjection.
+	   [DONE]

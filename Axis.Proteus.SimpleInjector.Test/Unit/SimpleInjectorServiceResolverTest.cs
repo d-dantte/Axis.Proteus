@@ -90,7 +90,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
         {
             // setup
             var container = new Container()
-                .Use(c => c.Register<I1, C_I1>());
+                .With(c => c.Register<I1, C_I1>());
             var manifest = new RegistryManifest()
                 .AddRootRegistration(new Registration(
                     typeof(I1),
@@ -256,7 +256,7 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
         {
             // setup
             var container = new Container()
-                .Use(c => c.Register<I1, C_I1>());
+                .With(c => c.Register<I1, C_I1>());
             var manifest = new RegistryManifest()
                 .AddRootRegistration(new Registration(
                     typeof(I1),

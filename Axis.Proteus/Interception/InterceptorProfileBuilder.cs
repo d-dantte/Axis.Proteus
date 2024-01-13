@@ -12,7 +12,7 @@ namespace Axis.Proteus.Interception
         {
         }
 
-        public InterceptorProfile Build() => new InterceptorProfile(_interceptors);
+        public InterceptorProfile Build() => new(_interceptors);
 
         public InterceptorProfileBuilder With<TInterceptor>()
         where TInterceptor: IInterceptor, new()
@@ -32,6 +32,6 @@ namespace Axis.Proteus.Interception
         /// <summary>
         /// Creates a new instance of the <see cref="InterceptorProfileBuilder"/>
         /// </summary>
-        public static InterceptorProfileBuilder NewBuilder() => new InterceptorProfileBuilder();
+        public static InterceptorProfileBuilder NewBuilder() => new();
     }
 }

@@ -10,13 +10,13 @@ namespace Axis.Proteus.Test
 
         public static Type[] RootServices(this IRegistrarContract contract)
             => contract
-                .ThrowIfNull(new ArgumentNullException(nameof(contract)))
+                .ThrowIfNull(() => new ArgumentNullException(nameof(contract)))
                 .RootManifest().Keys
                 .ToArray();
 
         public static Type[] CollectionServices(this IRegistrarContract contract)
             => contract
-                .ThrowIfNull(new ArgumentNullException(nameof(contract)))
+                .ThrowIfNull(() => new ArgumentNullException(nameof(contract)))
                 .CollectionManifest().Keys
                 .ToArray();
 
@@ -24,7 +24,7 @@ namespace Axis.Proteus.Test
             IRegistrarContract contract,
             Type serviceType)
             => contract
-                .ThrowIfNull(new ArgumentNullException(nameof(contract)))
+                .ThrowIfNull(() => new ArgumentNullException(nameof(contract)))
                 .RootManifest()
                 .TryGetValue(serviceType, out RegistrationInfo info)
                 ? info : (RegistrationInfo?)null;
@@ -38,7 +38,7 @@ namespace Axis.Proteus.Test
             IRegistrarContract contract,
             Type serviceType)
             => contract
-                .ThrowIfNull(new ArgumentNullException(nameof(contract)))
+                .ThrowIfNull(() => new ArgumentNullException(nameof(contract)))
                 .CollectionManifest()
                 .TryGetValue(serviceType, out RegistrationInfo[] infoList)
                 ? infoList : null;

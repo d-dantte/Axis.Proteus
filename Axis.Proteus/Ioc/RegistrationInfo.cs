@@ -64,7 +64,7 @@ namespace Axis.Proteus.IoC
             _bindContexts = new HashSet<IBindContext>() { IBindContext.Of(target) };
 
             if (ContainsDefaultContext(bindContexts))
-                throw new ArgumentException($"Supplied contexts MUST not contain a {typeof(IBindContext.DefaultContext)} instance.");
+                throw new ArgumentException($"Invalid {nameof(bindContexts)}: contains {typeof(IBindContext.DefaultContext)} instance.");
 
             if (!serviceType.IsAssignableFrom(target.Type))
                 throw new IncompatibleTypesException(serviceType, target.Type);
@@ -74,19 +74,21 @@ namespace Axis.Proteus.IoC
             foreach(var context in bindContexts)
             {
                 if (context is null)
-                    throw new ArgumentException($"{nameof(bindContexts)} must not contain null values");
+                    throw new ArgumentException($"Invalid {nameof(bindContexts)}: contains null value");
 
                 // deny duplicate named context names
                 else if (context is IBindContext.NamedContext namedContext
                     && !namedHash.Add(namedContext.Name.Name))
-                    throw new ArgumentException($"Duplicate {typeof(IBindContext.NamedContext)} name detected: {namedContext.Name}");
+                    throw new ArgumentException(
+                        $"Invalid {nameof(bindContexts)}: Duplicate {typeof(IBindContext.NamedContext)} name detected '{namedContext.Name}'");
 
                 else if (!serviceType.IsAssignableFrom(context.Target.Type))
                     throw new IncompatibleTypesException(serviceType, target.Type);
 
                 _ = _bindContexts
                     .Add(context)
-                    .ThrowIf(false, new ArgumentException($"Duplicate {typeof(IBindContext)} detected"));
+                    .ThrowIf(false, _ => new ArgumentException(
+                        $"Invalid {nameof(bindContexts)}: Duplicate {typeof(IBindContext)} detected"));
             }
         }
 
@@ -97,8 +99,8 @@ namespace Axis.Proteus.IoC
             return obj is RegistrationInfo other
                 && other.Scope.Equals(Scope)
                 && other.Profile.Equals(Profile)
-                && other.ServiceType.NullOrEquals(ServiceType)
-                && other._bindContexts.NullOrTrue(_bindContexts, Enumerable.SequenceEqual);
+                && other.ServiceType.IsNullOrEquals(ServiceType)
+                && other._bindContexts.IsNullOrTrue(_bindContexts, (x, y) => x.SetEquals(y));
         }
 
         private int ContextHashCode() => Common.ValueHash(_bindContexts ?? Enumerable.Empty<IBindContext>());

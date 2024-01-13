@@ -114,7 +114,6 @@ namespace Axis.Proteus.Test.IoC
 
             Assert.IsNotNull(info.DefaultContext);
             Assert.AreEqual(info.DefaultContext, info.BindContexts[0]);
-            Assert.IsTrue(info.DefaultContext is IBindContext.DefaultContext);
             Assert.AreEqual(typeof(C_I1_1), info.DefaultContext.Target.Type);
         }
 

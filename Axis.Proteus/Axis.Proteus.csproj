@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>7.1.0.0</AssemblyVersion>
-    <FileVersion>7.0.0.0</FileVersion>
+    <AssemblyVersion>7.2.0.0</AssemblyVersion>
+    <FileVersion>7.2.0.0</FileVersion>
     <Version>7.1.0</Version>
     <RootNamespace>Axis.Proteus</RootNamespace>
     <AssemblyName>Axis.Proteus</AssemblyName>
@@ -14,9 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Axis.Luna.Extensions" Version="6.0.2" />
-    <PackageReference Include="Axis.Luna.FInvoke" Version="6.0.2" />
-    <PackageReference Include="Castle.Core" Version="5.1.0" />
+    <PackageReference Include="Axis.Luna.Common" Version="6.0.30" />
+    <PackageReference Include="Axis.Luna.Extensions" Version="6.0.28" />
+    <PackageReference Include="Axis.Luna.FInvoke" Version="6.0.28" />
+    <PackageReference Include="Castle.Core" Version="5.1.1" />
   </ItemGroup>
 
 </Project>
