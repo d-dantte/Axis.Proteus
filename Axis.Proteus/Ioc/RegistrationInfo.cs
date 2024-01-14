@@ -1,20 +1,29 @@
-﻿using Axis.Luna.Extensions;
+﻿using Axis.Luna.Common;
+using Axis.Luna.Extensions;
 using Axis.Proteus.Exceptions;
 using Axis.Proteus.Interception;
+using Axis.Proteus.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Axis.Proteus.IoC
 {
-    public readonly struct RegistrationInfo
+    /// <summary>
+    /// 
+    /// </summary>
+    public readonly struct RegistrationInfo :
+        IDefaultValueProvider<RegistrationInfo>
     {
         private readonly HashSet<IBindContext> _bindContexts;
+        private readonly Type _serviceType;
+        private readonly InterceptorProfile _profile;
+        private readonly DeferredValue<int> _contextHash;
 
         /// <summary>
         /// The service type
         /// </summary>
-        public Type ServiceType { get; }
+        public Type ServiceType => _serviceType;
 
         /// <summary>
         /// The default context. 
@@ -30,38 +39,57 @@ namespace Axis.Proteus.IoC
         /// <summary>
         /// All available <see cref="IBindContext"/> instances applicable to this registration
         /// </summary>
-        public IBindContext[] BindContexts => _bindContexts?.ToArray();
+        public IBindContext[] BindContexts => _bindContexts?.ToArray() ?? Array.Empty<IBindContext>();
 
         /// <summary>
         /// The scope
         /// </summary>
-        public RegistryScope Scope { get; }
+        //public ResolutionScope Scope => _scope;
 
         /// <summary>
         /// The interception profile
         /// </summary>
-        public InterceptorProfile Profile { get; }
+        public InterceptorProfile Profile => _profile;
+
+        public bool IsDefault =>
+            _bindContexts is null
+            && _serviceType is null
+            && _profile.IsDefault;
+
+        public static RegistrationInfo Default => throw new NotImplementedException();
 
         public RegistrationInfo(
             Type implementationType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] bindContexts)
             : this(implementationType, IBindTarget.Of(implementationType), scope, profile, bindContexts)
         {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serviceType"></param>
+        /// <param name="target"></param>
+        /// <param name="scope"></param>
+        /// <param name="profile"></param>
+        /// <param name="bindContexts"></param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="IncompatibleTypesException"></exception>
         public RegistrationInfo(
             Type serviceType,
             IBindTarget target,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] bindContexts)
         {
-            ServiceType = serviceType ?? throw new ArgumentNullException(nameof(serviceType));
-            Scope = scope;
-            Profile = profile;
-            _bindContexts = new HashSet<IBindContext>() { IBindContext.Of(target) };
+            ArgumentNullException.ThrowIfNull(serviceType);
+            ArgumentNullException.ThrowIfNull(bindContexts);
+
+            _serviceType = serviceType;
+            _profile = profile;
+            _bindContexts = new HashSet<IBindContext>() { IBindContext.Of(target, scope) };
 
             if (ContainsDefaultContext(bindContexts))
                 throw new ArgumentException($"Invalid {nameof(bindContexts)}: contains {typeof(IBindContext.DefaultContext)} instance.");
@@ -90,22 +118,27 @@ namespace Axis.Proteus.IoC
                     .ThrowIf(false, _ => new ArgumentException(
                         $"Invalid {nameof(bindContexts)}: Duplicate {typeof(IBindContext)} detected"));
             }
+
+            var _this = this;
+            _contextHash = DeferredValue<int>.Of(() =>
+            {
+                return _this._bindContexts.Aggregate(0, HashCode.Combine);
+            });
         }
 
-        public override int GetHashCode() => HashCode.Combine(ServiceType, Scope, Profile, ContextHashCode());
+        public override int GetHashCode() => HashCode.Combine(ServiceType, Profile, _contextHash.Value);
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is RegistrationInfo other
-                && other.Scope.Equals(Scope)
                 && other.Profile.Equals(Profile)
                 && other.ServiceType.IsNullOrEquals(ServiceType)
                 && other._bindContexts.IsNullOrTrue(_bindContexts, (x, y) => x.SetEquals(y));
         }
 
-        private int ContextHashCode() => Common.ValueHash(_bindContexts ?? Enumerable.Empty<IBindContext>());
-
-        private static bool ContainsDefaultContext(IEnumerable<IBindContext> contexts) => contexts.Any(c => c is IBindContext.DefaultContext);
+        private static bool ContainsDefaultContext(
+            IEnumerable<IBindContext> contexts)
+            => contexts.Any(c => c is IBindContext.DefaultContext dc && !dc.IsDefault);
 
         public static bool operator ==(RegistrationInfo first, RegistrationInfo second) => first.Equals(second);
         public static bool operator !=(RegistrationInfo first, RegistrationInfo second) => !first.Equals(second);

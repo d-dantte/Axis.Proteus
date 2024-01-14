@@ -31,3 +31,9 @@ jobs:
       run: dotnet pack ./Axis.Proteus.SimpleInjector/Axis.Proteus.SimpleInjector.csproj --configuration Release /p:Version=${VERSION} --output .
     - name: Push
       run: dotnet nuget push Axis.Proteus.SimpleInjector.${VERSION}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }}
+
+    # Axis.Proteus.SystemDI
+    - name: Pack
+      run: dotnet pack ./Axis.Proteus.SystemDI/Axis.Proteus.SystemDI.csproj --configuration Release /p:Version=${VERSION} --output .
+    - name: Push
+      run: dotnet nuget push Axis.Proteus.SystemDI.${VERSION}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }}

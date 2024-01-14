@@ -50,14 +50,14 @@ namespace Axis.Proteus.IoC
 
         #region Registration
         public IRegistrarContract Register<Impl>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Impl : class
             => Register<Impl, Impl>(scope, profile, conditionalBindingContexts);
 
         public IRegistrarContract Register<Service, Impl>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Service : class
@@ -66,7 +66,7 @@ namespace Axis.Proteus.IoC
 
         public IRegistrarContract Register(
             Type serviceType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             => Register(serviceType, serviceType, scope, profile, conditionalBindingContexts);
@@ -74,7 +74,7 @@ namespace Axis.Proteus.IoC
         public IRegistrarContract Register(
             Type serviceType,
             Type concreteType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
         {
@@ -94,7 +94,7 @@ namespace Axis.Proteus.IoC
 
         public IRegistrarContract Register<Service>(
             Func<IResolverContract, Service> factory,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Service : class
@@ -103,7 +103,7 @@ namespace Axis.Proteus.IoC
         public IRegistrarContract Register(
             Type serviceType,
             Func<IResolverContract, object> factory,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
         {
@@ -122,14 +122,14 @@ namespace Axis.Proteus.IoC
         }
 
         public IRegistrarContract RegisterAll<Service>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindTarget[] targets)
             => RegisterAll(typeof(Service), scope, profile, targets);
 
         public IRegistrarContract RegisterAll(
             Type serviceType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindTarget[] targets)
         {

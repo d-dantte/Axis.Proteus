@@ -3,6 +3,7 @@
 namespace Axis.Proteus.SimpleInjector.NamedContext
 {
     /// <summary>
+    /// 
     /// </summary>
     public abstract class NamedContextContainerBase
     {

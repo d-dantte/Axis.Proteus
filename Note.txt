@@ -24,3 +24,8 @@
 	   single contstuctor, taking the given implementation(s). This dynamically created class is what will be registered in SimpleInjector, while
 	   the IRegristrarContract's manifest will maintain information about the NamedInjection.
 	   [DONE]
+
+  2024/01/13 ====================================================================
+
+  1. Instead of using DynamicTypeUtil to generate dynamic types that differentiate the resolved types for IBindContext.NamedContext, experiment with
+     creating a new

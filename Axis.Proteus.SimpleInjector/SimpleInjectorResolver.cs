@@ -28,11 +28,11 @@ namespace Axis.Proteus.SimpleInjector
 
         public void Dispose() => _container.Dispose();
 
-        public Service Resolve<Service>(ResolutionContextName contextName = default)
+        public Service? Resolve<Service>(ResolutionContextName contextName = default)
             where Service : class
             => Resolve(typeof(Service), contextName).As<Service>();
 
-        public object Resolve(Type serviceType, ResolutionContextName contextName = default)
+        public object? Resolve(Type serviceType, ResolutionContextName contextName = default)
         {
             var registration = _manifest.RootRegistrationFor(serviceType);
 
@@ -70,11 +70,11 @@ namespace Axis.Proteus.SimpleInjector
                         registration.Value.Profile.Interceptors.ToArray());
         }
 
-        public IEnumerable<Service> ResolveAll<Service>()
+        public IEnumerable<Service?> ResolveAll<Service>()
             where Service : class
-            => ResolveAll(typeof(Service)).Select(Common.As<Service>);
+            => ResolveAll(typeof(Service)).SelectAs<Service>();
 
-        public IEnumerable<object> ResolveAll(Type serviceType)
+        public IEnumerable<object?> ResolveAll(Type serviceType)
         {
             return _manifest
                 .CollectionRegistrationsFor(serviceType)
@@ -128,7 +128,10 @@ namespace Axis.Proteus.SimpleInjector
         public ReadOnlyDictionary<Type, RegistrationInfo> RootManifest()
             => _manifest
                 .RootServices()
-                .ToDictionary(type => type, type => _manifest.RootRegistrationFor(type) ?? throw new Exception($"no registration was found for the given type: {type}"))
+                .ToDictionary(
+                    type => type,
+                    type => _manifest.RootRegistrationFor(type)
+                        ?? throw new Exception($"no registration was found for the given type: {type}"))
                 .ApplyTo(dict => new ReadOnlyDictionary<Type, RegistrationInfo>(dict));
 
         private object GetNamedContextInstance(
@@ -138,13 +141,13 @@ namespace Axis.Proteus.SimpleInjector
             return bindContext.Target switch
             {
                 IBindTarget.TypeTarget typeTarget => bindContext.Name
-                    .ToNamedContextReplacementType(
+                    .ToReplacementTypeForNamedContext(
                         registration.ServiceType,
                         typeTarget.Type)
                     .ApplyTo(_container.GetInstance),
 
                 IBindTarget.FactoryTarget factoryTarget => bindContext.Name
-                    .ToNamedContextContainerType(
+                    .ToContainerTypeForNamedContext(
                         registration.ServiceType,
                         factoryTarget.Type)
                     .ApplyTo(_container.GetInstance)

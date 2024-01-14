@@ -20,7 +20,7 @@ namespace Axis.Proteus.Test.IoC
 			var registration = registrar
 				.Register(
 					typeof(C_I1_1),
-					RegistryScope.Transient)
+					ResolutionScope.Transient)
 				.RootRegistrationFor(typeof(C_I1_1));
 
 			Assert.IsNotNull(registration);
@@ -29,7 +29,7 @@ namespace Axis.Proteus.Test.IoC
 			var implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
 			Assert.AreEqual(default, info.Profile);
 
@@ -39,7 +39,7 @@ namespace Axis.Proteus.Test.IoC
 			registration = registrar
 				.Register(
 					typeof(C_I1_1),
-					RegistryScope.Transient,
+					ResolutionScope.Transient,
 					profile)
 				.RootRegistrationFor(typeof(C_I1_1));
 
@@ -49,7 +49,7 @@ namespace Axis.Proteus.Test.IoC
 			implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.AreEqual(profile, info.Profile);
 		}
 		#endregion
@@ -64,7 +64,7 @@ namespace Axis.Proteus.Test.IoC
 				.Register(
 					typeof(I1),
 					typeof(C_I1_1),
-					RegistryScope.Transient)
+					ResolutionScope.Transient)
 				.RootRegistrationFor(typeof(I1));
 
 			Assert.IsNotNull(registration);
@@ -73,7 +73,7 @@ namespace Axis.Proteus.Test.IoC
 			var implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
 			Assert.AreEqual(default, info.Profile);
 		}
@@ -91,13 +91,13 @@ namespace Axis.Proteus.Test.IoC
 				.Register(
 					typeof(I1),
 					new Func<IResolverContract, I1>(_r => new C_I1_I2_1()),
-					RegistryScope.Singleton,
+					ResolutionScope.Singleton,
 					profile)
 				.RootRegistrationFor(typeof(I1));
 
 			Assert.IsNotNull(registration);
 			Assert.AreEqual(profile, registration.Value.Profile);
-			Assert.AreEqual(RegistryScope.Singleton, registration.Value.Scope);
+			Assert.AreEqual(ResolutionScope.Singleton, registration.Value.DefaultContext.Scope);
 		}
 		#endregion
 
@@ -108,7 +108,7 @@ namespace Axis.Proteus.Test.IoC
 			// test
 			var registrar = new DummyRegistrar();
 			var registration = registrar
-				.Register<C_I1_1>(RegistryScope.Transient)
+				.Register<C_I1_1>(ResolutionScope.Transient)
 				.RootRegistrationFor(typeof(C_I1_1));
 
 			Assert.IsNotNull(registration);
@@ -117,7 +117,7 @@ namespace Axis.Proteus.Test.IoC
 			var implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
 			Assert.AreEqual(default, info.Profile);
 
@@ -125,7 +125,7 @@ namespace Axis.Proteus.Test.IoC
 			registrar = new DummyRegistrar();
 			var profile = new InterceptorProfile(new NoOpInterceptor());
 			registration = registrar
-				.Register<C_I1_1>(RegistryScope.Transient, profile)
+				.Register<C_I1_1>(ResolutionScope.Transient, profile)
 				.RootRegistrationFor(typeof(C_I1_1));
 
 			Assert.IsNotNull(registration);
@@ -134,7 +134,7 @@ namespace Axis.Proteus.Test.IoC
 			implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.AreEqual(profile, info.Profile);
 		}
 		#endregion
@@ -146,7 +146,7 @@ namespace Axis.Proteus.Test.IoC
 			// test
 			var registrar = new DummyRegistrar();
 			var registration = registrar
-				.Register<I1, C_I1_1>(RegistryScope.Transient, default)
+				.Register<I1, C_I1_1>(ResolutionScope.Transient, default)
 				.RootRegistrationFor(typeof(I1));
 
 			Assert.IsNotNull(registration);
@@ -155,7 +155,7 @@ namespace Axis.Proteus.Test.IoC
 			var implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.IsTrue(info.Profile.Equals(default(InterceptorProfile)));
 			Assert.AreEqual(default, info.Profile);
 
@@ -163,7 +163,7 @@ namespace Axis.Proteus.Test.IoC
 			registrar = new DummyRegistrar();
 			var profile = new InterceptorProfile(new NoOpInterceptor());
 			registration = registrar
-				.Register<I1, C_I1_1>(RegistryScope.Transient, profile)
+				.Register<I1, C_I1_1>(ResolutionScope.Transient, profile)
 				.RootRegistrationFor(typeof(I1));
 
 			Assert.IsNotNull(registration);
@@ -172,7 +172,7 @@ namespace Axis.Proteus.Test.IoC
 			implT = info.DefaultContext.Target as IBindTarget.TypeTarget;
 			Assert.IsNotNull(implT);
 			Assert.AreEqual(typeof(C_I1_1), implT.Type);
-			Assert.AreEqual(RegistryScope.Transient, info.Scope);
+			Assert.AreEqual(ResolutionScope.Transient, info.DefaultContext.Scope);
 			Assert.AreEqual(profile, info.Profile);
 		}
 		#endregion
@@ -188,12 +188,12 @@ namespace Axis.Proteus.Test.IoC
 			var registration = registrar
 				.Register(
 					new Func<IResolverContract, I1>(_r => new C_I1_I2_1()),
-					RegistryScope.Singleton,
+					ResolutionScope.Singleton,
 					profile)
 				.RootRegistrationFor(typeof(I1));
 
 			Assert.IsNotNull(registration);
-			Assert.AreEqual(RegistryScope.Singleton, registration.Value.Scope);
+			Assert.AreEqual(ResolutionScope.Singleton, registration.Value.DefaultContext.Scope);
 			Assert.AreEqual(profile, registration.Value.Profile);
 		}
 		#endregion
@@ -207,7 +207,7 @@ namespace Axis.Proteus.Test.IoC
 
 			// test empty registration
 			registrar.RegisterAll<I1>(
-				RegistryScope.Transient,
+				ResolutionScope.Transient,
 				default);
 
 			// assert
@@ -218,7 +218,7 @@ namespace Axis.Proteus.Test.IoC
 
 			// test single registration
 			registrar.RegisterAll<I1>(
-				RegistryScope.Transient,
+				ResolutionScope.Transient,
 				default,
 				IBindTarget.Of(typeof(C_I1_1)));
 
@@ -226,20 +226,20 @@ namespace Axis.Proteus.Test.IoC
 			Assert.AreEqual(1, registrar.CollectionServices().Length);
 			var registrations = registrar.CollectionRegistrationsFor(typeof(I1));
 			Assert.AreEqual(1, registrations.Length);
-			AssertRegistration(registrations[0], typeof(I1), RegistryScope.Transient, default(InterceptorProfile));
+			AssertRegistration(registrations[0], typeof(I1), ResolutionScope.Transient, default(InterceptorProfile));
 			Assert.AreEqual(typeof(C_I1_1), registrations[0].DefaultContext.Target.Type);
 
 			// setup multiple registrations
 			registrar = new DummyRegistrar();
 			registrar
 				.RegisterAll<I1>(
-					RegistryScope.Transient,
+					ResolutionScope.Transient,
 					default,
 					IBindTarget.Of(typeof(C_I1_1)),
 					IBindTarget.Of(typeof(C_I1_2)),
 					IBindTarget.Of(typeof(C_I1_I2_1)))
 				.RegisterAll<I2>(
-					RegistryScope.Singleton,
+					ResolutionScope.Singleton,
 					default,
 					IBindTarget.Of(typeof(C_I2_1)));
 
@@ -248,14 +248,14 @@ namespace Axis.Proteus.Test.IoC
 
 			registrations = registrar.CollectionRegistrationsFor(typeof(I1));
 			Assert.AreEqual(3, registrations.Length);
-			registrations.ForAll(r => AssertRegistration(r, typeof(I1), RegistryScope.Transient, default(InterceptorProfile)));
+			registrations.ForAll(r => AssertRegistration(r, typeof(I1), ResolutionScope.Transient, default(InterceptorProfile)));
 			Assert.AreEqual(typeof(C_I1_1), registrations[0].DefaultContext.Target.Type);
 			Assert.AreEqual(typeof(C_I1_2), registrations[1].DefaultContext.Target.Type);
 			Assert.AreEqual(typeof(C_I1_I2_1), registrations[2].DefaultContext.Target.Type);
 
 			registrations = registrar.CollectionRegistrationsFor(typeof(I2));
 			Assert.AreEqual(1, registrations.Length);
-			registrations.ForAll(r => AssertRegistration(r, typeof(I2), RegistryScope.Singleton, default(InterceptorProfile)));
+			registrations.ForAll(r => AssertRegistration(r, typeof(I2), ResolutionScope.Singleton, default(InterceptorProfile)));
 			Assert.AreEqual(typeof(C_I2_1), registrations[0].DefaultContext.Target.Type);
 		}
 		#endregion
@@ -270,7 +270,7 @@ namespace Axis.Proteus.Test.IoC
 			// test
 			registrar.RegisterAll(
 				typeof(I1),
-				RegistryScope.Transient,
+				ResolutionScope.Transient,
 				default);
 
 			// assert
@@ -282,7 +282,7 @@ namespace Axis.Proteus.Test.IoC
 			// test
 			registrar.RegisterAll(
 				typeof(I1),
-				RegistryScope.Transient,
+				ResolutionScope.Transient,
 				default,
 				IBindTarget.Of(typeof(C_I1_1)));
 
@@ -290,20 +290,20 @@ namespace Axis.Proteus.Test.IoC
 			Assert.AreEqual(1, registrar.CollectionServices().Length);
 			var registrations = registrar.CollectionRegistrationsFor(typeof(I1));
 			Assert.AreEqual(1, registrations.Length);
-			AssertRegistration(registrations[0], typeof(I1), RegistryScope.Transient, default(InterceptorProfile));
+			AssertRegistration(registrations[0], typeof(I1), ResolutionScope.Transient, default(InterceptorProfile));
 			Assert.AreEqual(typeof(C_I1_1), registrations[0].DefaultContext.Target.Type);
 
 			// setup multiple registrations
 			registrar = new DummyRegistrar();
 			registrar
 				.RegisterAll<I1>(
-					RegistryScope.Transient,
+					ResolutionScope.Transient,
 					default,
 					IBindTarget.Of(typeof(C_I1_1)),
 					IBindTarget.Of(typeof(C_I1_2)),
 					IBindTarget.Of(typeof(C_I1_I2_1)))
 				.RegisterAll<I2>(
-					RegistryScope.Singleton,
+					ResolutionScope.Singleton,
 					default,
 					IBindTarget.Of(typeof(C_I2_1)));
 
@@ -312,14 +312,14 @@ namespace Axis.Proteus.Test.IoC
 
 			registrations = registrar.CollectionRegistrationsFor(typeof(I1));
 			Assert.AreEqual(3, registrations.Length);
-			registrations.ForAll(r => AssertRegistration(r, typeof(I1), RegistryScope.Transient, default(InterceptorProfile)));
+			registrations.ForAll(r => AssertRegistration(r, typeof(I1), ResolutionScope.Transient, default(InterceptorProfile)));
 			Assert.AreEqual(typeof(C_I1_1), registrations[0].DefaultContext.Target.Type);
 			Assert.AreEqual(typeof(C_I1_2), registrations[1].DefaultContext.Target.Type);
 			Assert.AreEqual(typeof(C_I1_I2_1), registrations[2].DefaultContext.Target.Type);
 
 			registrations = registrar.CollectionRegistrationsFor(typeof(I2));
 			Assert.AreEqual(1, registrations.Length);
-			registrations.ForAll(r => AssertRegistration(r, typeof(I2), RegistryScope.Singleton, default(InterceptorProfile)));
+			registrations.ForAll(r => AssertRegistration(r, typeof(I2), ResolutionScope.Singleton, default(InterceptorProfile)));
 			Assert.AreEqual(typeof(C_I2_1), registrations[0].DefaultContext.Target.Type);
 		}
 		#endregion
@@ -328,14 +328,14 @@ namespace Axis.Proteus.Test.IoC
 		private void AssertRegistration(
 			RegistrationInfo info,
 			Type serviceType,
-			RegistryScope? scope,
+			ResolutionScope? scope,
 			InterceptorProfile? profile)
 		{
 			if (serviceType != null)
 				Assert.AreEqual(serviceType, info.ServiceType);
 
 			if (scope != null)
-				Assert.AreEqual(scope.Value, info.Scope);
+				Assert.AreEqual(scope.Value, info.DefaultContext.Scope);
 
 			if (profile != null)
 				Assert.AreEqual(profile.Value, info.Profile);

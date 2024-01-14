@@ -13,7 +13,7 @@ namespace Axis.Proteus.Interception
 	/// Represents an ordered set of interceptors that are attached to instances generated for types registered with interceptors.
 	/// The interceptors are executed in the order they are given in this struct.
 	/// </summary>
-	public readonly struct InterceptorProfile:
+	public readonly struct InterceptorProfile :
 		IDefaultValueProvider<InterceptorProfile>
 	{
 		private readonly IInterceptor[] _interceptors;
@@ -54,7 +54,7 @@ namespace Axis.Proteus.Interception
 
 		public override int GetHashCode() => _hashCode;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is InterceptorProfile other
 				&& _hashCode == other._hashCode

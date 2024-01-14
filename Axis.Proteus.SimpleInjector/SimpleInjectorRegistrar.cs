@@ -6,6 +6,7 @@ using SimpleInjector;
 using System;
 using System.Linq;
 using System.Reflection;
+using static Axis.Proteus.IoC.IBindContext;
 
 namespace Axis.Proteus.SimpleInjector
 {
@@ -21,13 +22,14 @@ namespace Axis.Proteus.SimpleInjector
     {
         private readonly Container _container;
         private readonly IProxyGenerator _proxyGenerator;
-        private IResolverContract _resolverContract;
+        private IResolverContract? _resolverContract;
 
         #region constructor
         public SimpleInjectorRegistrar(Container container, IProxyGenerator proxyGenerator)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
             _proxyGenerator = proxyGenerator ?? throw new ArgumentNullException(nameof(proxyGenerator));
+            _resolverContract = null;
         }
 
         public SimpleInjectorRegistrar(Container container)
@@ -57,26 +59,39 @@ namespace Axis.Proteus.SimpleInjector
 
                 var contexts = rootRegistration.BindContexts;
                 if (contexts.Length == 1)
-                    BindDefaultContext(rootRegistration, contexts[0].As<IBindContext.DefaultContext>());
+                    BindDefaultContext(
+                        rootRegistration.ServiceType,
+                        contexts[0].As<IBindContext.DefaultContext>());
 
-                else foreach (var context in rootRegistration.BindContexts.Reverse())
+                else
+                {
+                    foreach (var context in rootRegistration.BindContexts.Reverse())
                     {
                         // the default context should always come last, hence the "Reverse()" action applied above.
                         if (context is IBindContext.DefaultContext defaultContext)
-                            BindDefaultContextConditionally(rootRegistration, defaultContext);
+                            BindDefaultContextConditionally(
+                                rootRegistration.ServiceType,
+                                defaultContext);
 
                         else if (context is IBindContext.ParameterContext paramContext)
-                            BindParameterContext(rootRegistration, paramContext);
+                            BindParameterContext(
+                                rootRegistration.ServiceType,
+                                paramContext);
 
                         else if (context is IBindContext.PropertyContext propContext)
-                            BindPropertyContext(rootRegistration, propContext);
+                            BindPropertyContext(
+                                rootRegistration.ServiceType,
+                                propContext);
 
                         else if (context is IBindContext.NamedContext namedContext)
-                            BindNamedContext(rootRegistration, namedContext);
+                            BindNamedContext(
+                                rootRegistration.ServiceType,
+                                namedContext);
 
                         else
                             throw new InvalidOperationException($"Invalid context type: {context?.GetType()}");
                     }
+                }
             }
 
             // register collection types
@@ -112,34 +127,34 @@ namespace Axis.Proteus.SimpleInjector
         #endregion
 
         #region Context Binders
-        private void BindNamedContext(RegistrationInfo rootRegistration, IBindContext.NamedContext namedContext)
+        private void BindNamedContext(Type serviceType, IBindContext.NamedContext namedContext)
         {
             // register the dynamic type
-            var lifestyle = rootRegistration.Scope.ToSimpleInjectorLifeStyle();
+            var lifestyle = namedContext.Scope.ToSimpleInjectorLifeStyle();
 
             if (namedContext.Target is IBindTarget.TypeTarget namedTypeTarget)
             {
                 var replacementType = GetReplacementTypeForNamedContext(
                         namedContext.Name,
-                        rootRegistration.ServiceType,
+                       serviceType,
                         namedTypeTarget.Type);
 
                 _container.Register(
                     serviceType: replacementType,
                     implementationType: replacementType,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle());
+                    lifestyle: lifestyle);
             }
 
             else if (namedContext.Target is IBindTarget.FactoryTarget namedFactoryTarget)
             {
-                (var containerType, var containerInstanceProducer) = GetNamedContextContainerType(
+                (var containerType, var containerInstanceProducer) = GetContainerTypeForNamedContext(
                     namedContext.Name,
-                    rootRegistration.ServiceType,
+                    serviceType,
                     namedFactoryTarget.Type);
 
                 _container.Register(
                     serviceType: containerType,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle(),
+                    lifestyle: lifestyle,
                     instanceCreator: () =>
                     {
                         // resolve the target instance.
@@ -156,23 +171,23 @@ namespace Axis.Proteus.SimpleInjector
                 throw new InvalidOperationException($"Invalid target type: {namedContext.Target?.GetType()}");
         }
 
-        private void BindPropertyContext(RegistrationInfo rootRegistration, IBindContext.PropertyContext propContext)
+        private void BindPropertyContext(Type serviceType, IBindContext.PropertyContext propContext)
         {
+            var lifeStyle = propContext.Scope.ToSimpleInjectorLifeStyle();
             if (propContext.Target is IBindTarget.TypeTarget propTypeTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     implementationType: propTypeTarget.Type,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle(),
+                    lifestyle: lifeStyle,
                     predicate: CreatePropertyContextPredicate(propContext));
 
             else if (propContext.Target is IBindTarget.FactoryTarget propFactoryTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     predicate: CreatePropertyContextPredicate(propContext),
-                    registration: rootRegistration.Scope
-                        .ToSimpleInjectorLifeStyle()
+                    registration: lifeStyle
                         .CreateRegistration(
-                            serviceType: rootRegistration.ServiceType,
+                            serviceType: serviceType,
                             container: _container,
                             instanceCreator: propFactoryTarget.Factory.ApplyTo(
                                 CreateResolverInjectedInstanceProducer)));
@@ -181,23 +196,23 @@ namespace Axis.Proteus.SimpleInjector
                 throw new InvalidOperationException("Invalid target type: " + propContext.Target?.GetType());
         }
 
-        private void BindParameterContext(RegistrationInfo rootRegistration, IBindContext.ParameterContext paramContext)
+        private void BindParameterContext(Type serviceType, IBindContext.ParameterContext paramContext)
         {
+            var lifeStyle = paramContext.Scope.ToSimpleInjectorLifeStyle();
             if (paramContext.Target is IBindTarget.TypeTarget paramTypeTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     implementationType: paramTypeTarget.Type,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle(),
+                    lifestyle: lifeStyle,
                     predicate: CreateParamContextPredicate(paramContext));
 
             else if (paramContext.Target is IBindTarget.FactoryTarget paramFactoryTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     predicate: CreateParamContextPredicate(paramContext),
-                    registration: rootRegistration.Scope
-                        .ToSimpleInjectorLifeStyle()
+                    registration: lifeStyle
                         .CreateRegistration(
-                            serviceType: rootRegistration.ServiceType,
+                            serviceType: serviceType,
                             container: _container,
                             instanceCreator: paramFactoryTarget.Factory.ApplyTo(
                                 CreateResolverInjectedInstanceProducer)));
@@ -206,18 +221,19 @@ namespace Axis.Proteus.SimpleInjector
                 throw new InvalidOperationException("Invalid target type: " + paramContext.Target?.GetType());
         }
 
-        private void BindDefaultContext(RegistrationInfo rootRegistration, IBindContext.DefaultContext context)
+        private void BindDefaultContext(Type serviceType, IBindContext.DefaultContext context)
         {
+            var lifeStyle = context.Scope.ToSimpleInjectorLifeStyle();
             if (context.Target is IBindTarget.TypeTarget typeTarget)
                 _container.Register(
-                    rootRegistration.ServiceType,
+                    serviceType,
                     typeTarget.Type,
-                    rootRegistration.Scope.ToSimpleInjectorLifeStyle());
+                    lifeStyle);
 
             else if (context.Target is IBindTarget.FactoryTarget factoryTarget)
                 _container.Register(
-                    serviceType: rootRegistration.ServiceType,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle(),
+                    serviceType: serviceType,
+                    lifestyle: lifeStyle,
                     instanceCreator: factoryTarget.Factory.ApplyTo(CreateResolverInjectedInstanceProducer));
 
             else
@@ -225,24 +241,24 @@ namespace Axis.Proteus.SimpleInjector
         }
 
         private void BindDefaultContextConditionally(
-            RegistrationInfo rootRegistration,
+            Type serviceType,
             IBindContext.DefaultContext defaultContext)
         {
+            var lifeStyle = defaultContext.Scope.ToSimpleInjectorLifeStyle();
             if (defaultContext.Target is IBindTarget.TypeTarget typeTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     predicate: predicateContext => !predicateContext.Handled, // <-- meaning, fall back to this condition
                     implementationType: typeTarget.Type,
-                    lifestyle: rootRegistration.Scope.ToSimpleInjectorLifeStyle());
+                    lifestyle: lifeStyle);
 
             else if (defaultContext.Target is IBindTarget.FactoryTarget factoryTarget)
                 _container.RegisterConditional(
-                    serviceType: rootRegistration.ServiceType,
+                    serviceType: serviceType,
                     predicate: predicateContext => !predicateContext.Handled, // <-- meaning, fall back to this condition
-                    registration: rootRegistration.Scope
-                        .ToSimpleInjectorLifeStyle()
+                    registration: lifeStyle
                         .CreateRegistration(
-                            serviceType: rootRegistration.ServiceType,
+                            serviceType: serviceType,
                             container: _container,
                             instanceCreator: factoryTarget.Factory.ApplyTo(
                                 CreateResolverInjectedInstanceProducer)));
@@ -250,16 +266,17 @@ namespace Axis.Proteus.SimpleInjector
 
         private void BindCollectionDefaultContext(RegistrationInfo registration)
         {
-            if (registration.DefaultContext.Target is IBindTarget.TypeTarget typeTarget)
+            var defaultContext = registration.DefaultContext;
+            if (defaultContext.Target is IBindTarget.TypeTarget typeTarget)
                 _container.Collection.Append(
                     registration.ServiceType,
                     typeTarget.Type,
-                    registration.Scope.ToSimpleInjectorLifeStyle());
+                    defaultContext.Scope.ToSimpleInjectorLifeStyle());
 
-            else if (registration.DefaultContext.Target is IBindTarget.FactoryTarget factoryTarget)
+            else if (defaultContext.Target is IBindTarget.FactoryTarget factoryTarget)
                 _container.Collection.Append(
                     registration.ServiceType,
-                    registration.Scope
+                    defaultContext.Scope
                         .ToSimpleInjectorLifeStyle()
                         .CreateRegistration(
                             serviceType: registration.ServiceType,
@@ -268,7 +285,7 @@ namespace Axis.Proteus.SimpleInjector
                                 CreateResolverInjectedInstanceProducer)));
 
             else
-                throw new InvalidOperationException($"Invalid default binding context: {registration.DefaultContext.Target}");
+                throw new InvalidOperationException($"Invalid default binding context: {defaultContext.Target}");
         }
         #endregion
 
@@ -276,22 +293,22 @@ namespace Axis.Proteus.SimpleInjector
             ResolutionContextName contextName,
             Type serviceType,
             Type implType)
-            => DynamicTypeUtil.ToNamedContextReplacementType(contextName, serviceType, implType);
+            => DynamicTypeUtil.ToReplacementTypeForNamedContext(contextName, serviceType, implType);
 
-        private static (Type containerType, Func<object, NamedContextContainerBase> instanceProducer) GetNamedContextContainerType(
+        private static (Type containerType, Func<object, NamedContextContainerBase> instanceProducer) GetContainerTypeForNamedContext(
             ResolutionContextName contextName,
             Type serviceType,
             Type implType)
         {
             // create (and cache) the container type
-            var containerType = DynamicTypeUtil.ToNamedContextContainerType(
+            var containerType = DynamicTypeUtil.ToContainerTypeForNamedContext(
                 contextName,
                 serviceType,
                 implType);
 
             // get the static 'NewInstance' method.
             MethodInfo newInstanceMethod = containerType.GetMethod(
-                DynamicTypeUtil.NamedContextContainerTypeNewInstanceMethodName);
+                DynamicTypeUtil.NamedContextContainerTypeNewInstanceMethodName)!;
 
             // create delegate for NewInstance method
             var contextContainerProducer = newInstanceMethod

@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Axis.Proteus.IoC
 {
     /// <summary>
-    /// A bind context specifies a condition that has to be met for the given registered type to be resolved. There are 3 contexts:
+    /// A bind context specifies a condition that has to be met for the given registered type to be resolved. There are 4 contexts:
     /// <list type="number">
     ///     <item>
     ///         <see cref="ParameterContext"/>: This specifies conditions in the context of injecting the target type into a method/constructor
@@ -25,6 +25,7 @@ namespace Axis.Proteus.IoC
     /// </summary>
     public interface IBindContext
     {
+        #region Of
         /// <summary>
         /// Creates a <see cref="ParameterContext"/>
         /// </summary>
@@ -32,8 +33,9 @@ namespace Axis.Proteus.IoC
         /// <param name="predicate">The predicate that must be true for this injection to be made</param>
         public static IBindContext OfParameter(
             IBindTarget target,
-            Func<ParameterInfo, bool> predicate)
-            => new ParameterContext(target, predicate);
+            Func<ParameterInfo, bool> predicate,
+            ResolutionScope scope = default)
+            => new ParameterContext(target, predicate, scope);
 
         /// <summary>
         /// Creates a <see cref="PropertyContext"/>
@@ -42,8 +44,9 @@ namespace Axis.Proteus.IoC
         /// <param name="predicate">The predicate that must be true for this injection to be made</param>
         public static IBindContext OfProperty(
             IBindTarget target,
-            Func<PropertyInfo, bool> predicate)
-            => new PropertyContext(target, predicate);
+            Func<PropertyInfo, bool> predicate,
+            ResolutionScope scope = default)
+            => new PropertyContext(target, predicate, scope);
 
         /// <summary>
         /// Creates a <see cref="NamedContext"/>
@@ -52,20 +55,30 @@ namespace Axis.Proteus.IoC
         /// <param name="target">The target type of the injection</param>
         public static IBindContext Of(
             string name,
-            IBindTarget target)
-            => new NamedContext(name, target);
+            IBindTarget target,
+            ResolutionScope scope = default)
+            => new NamedContext(name, target, scope);
 
         /// <summary>
         /// Creates a <see cref="DefaultContext"/>. When no context is supplied, or all other contexts do not match, the MANDATORY default context is used.
         /// </summary>
         /// <param name="target">The target type of the injection</param>
-        internal static IBindContext Of(IBindTarget target) => new DefaultContext(target);
+        internal static IBindContext Of(
+            IBindTarget target,
+            ResolutionScope scope = default)
+            => new DefaultContext(target, scope);
+        #endregion
 
         #region Members
         /// <summary>
         /// The target type being bound to
         /// </summary>
         IBindTarget Target { get; }
+
+        /// <summary>
+        /// The scope to use for this context
+        /// </summary>
+        ResolutionScope Scope { get; }
         #endregion
 
         #region Union
@@ -79,21 +92,25 @@ namespace Axis.Proteus.IoC
         {
             public IBindTarget Target { get; }
 
-            public bool IsDefault => Target is null;
+            public ResolutionScope Scope { get; }
+
+            public bool IsDefault => Target is null && Scope.IsDefault;
 
             public static DefaultContext Default => default;
 
-            internal DefaultContext(IBindTarget target)
+            internal DefaultContext(IBindTarget target, ResolutionScope scope = default)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
+                Scope = scope;
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target);
+            public override int GetHashCode() => HashCode.Combine(Target, Scope);
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is DefaultContext other
-                    && Target.IsNullOrEquals(other.Target);
+                    && Target.IsNullOrEquals(other.Target)
+                    && Scope.Equals(other.Scope);
             }
 
             public static bool operator ==(DefaultContext first, DefaultContext second) => first.NullOrEquals(second);
@@ -106,63 +123,84 @@ namespace Axis.Proteus.IoC
             public static implicit operator DefaultContext(IBindTarget.TypeTarget target) => new(target);
         }
 
-        public readonly struct NamedContext : IBindContext
+        /// <summary>
+        /// 
+        /// </summary>
+        public readonly struct NamedContext :
+            IBindContext,
+            IDefaultValueProvider<NamedContext>
         {
             public IBindTarget Target { get; }
+
+            public ResolutionScope Scope { get; }
 
             /// <summary>
             /// The unique name differentiating instance resolution intent
             /// </summary>
             public ResolutionContextName Name { get; }
 
-            internal NamedContext(string name, IBindTarget target)
+            public bool IsDefault => Target is null && Scope.IsDefault;
+
+            public static NamedContext Default => default;
+
+            internal NamedContext(string name, IBindTarget target, ResolutionScope scope = default)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
+                Scope = scope;
                 Name = name; // the resolution context name verifies the value.
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target, Name);
+            public override int GetHashCode() => HashCode.Combine(Target, Scope, Name);
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is NamedContext other
                     && Target.IsNullOrEquals(other.Target)
-                    && other.Name.Equals(Name);
+                    && Scope.Equals(other.Scope)
+                    && Name.Equals(other.Name);
             }
 
             public static bool operator ==(NamedContext first, NamedContext second) => first.NullOrEquals(second);
             public static bool operator !=(NamedContext first, NamedContext second) => !first.NullOrEquals(second);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public readonly struct ParameterContext :
             IBindContext,
             IDefaultValueProvider<ParameterContext>
         {
             public IBindTarget Target { get; }
 
+            public ResolutionScope Scope { get; }
+
             /// <summary>
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<ParameterInfo, bool> Predicate { get; }
 
-            public bool IsDefault => Predicate is null && Target is null;
+            public bool IsDefault => Predicate is null && Target is null && Scope.IsDefault;
 
             public static ParameterContext Default => default;
 
             internal ParameterContext(
                 IBindTarget target,
-                Func<ParameterInfo, bool> predicate)
+                Func<ParameterInfo, bool> predicate,
+                ResolutionScope scope = default)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
                 Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
+                Scope = scope;
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target, Predicate);
+            public override int GetHashCode() => HashCode.Combine(Target, Scope, Predicate);
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is ParameterContext other
                     && Target.IsNullOrEquals(other.Target)
+                    && Scope.Equals(other.Scope)
                     && Predicate.IsNullOrEquals(other.Predicate);
             }
 
@@ -170,35 +208,43 @@ namespace Axis.Proteus.IoC
             public static bool operator !=(ParameterContext first, ParameterContext second) => !first.NullOrEquals(second);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public readonly struct PropertyContext :
             IBindContext,
             IDefaultValueProvider<PropertyContext>
         {
             public IBindTarget Target { get; }
 
+            public ResolutionScope Scope { get; }
+
             /// <summary>
             /// The condition that must be met for this context to be applied
             /// </summary>
             public Func<PropertyInfo, bool> Predicate { get; }
 
-            public bool IsDefault => Predicate is null && Target is null;
+            public bool IsDefault => Predicate is null && Target is null && Scope.IsDefault;
 
             public static PropertyContext Default => default;
 
             internal PropertyContext(
                 IBindTarget target,
-                Func<PropertyInfo, bool> predicate)
+                Func<PropertyInfo, bool> predicate,
+                ResolutionScope scope = default)
             {
                 Target = target ?? throw new ArgumentNullException(nameof(target));
                 Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
+                Scope = scope;
             }
 
-            public override int GetHashCode() => HashCode.Combine(Target, Predicate);
+            public override int GetHashCode() => HashCode.Combine(Target, Scope, Predicate);
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return obj is PropertyContext other
                     && Target.IsNullOrEquals(other.Target)
+                    && Scope.Equals(other.Scope)
                     && Predicate.IsNullOrEquals(other.Predicate);
             }
 

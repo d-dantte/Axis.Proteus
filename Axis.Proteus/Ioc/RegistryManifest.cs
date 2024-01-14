@@ -28,7 +28,7 @@ namespace Axis.Proteus.IoC
         /// Gets all the <see cref="RegistrationInfo"/> instances registered against the given collection service type. Returns null if non have been registered
         /// </summary>
         /// <param name="collectionServiceType">The collection type</param>
-        public virtual RegistrationInfo[] CollectionRegistrationsFor(Type collectionServiceType)
+        public virtual RegistrationInfo[]? CollectionRegistrationsFor(Type collectionServiceType)
             => _collectionManifest.TryGetValue(collectionServiceType, out var registrations)
                 ? registrations.ToArray()
                 : null;
@@ -75,7 +75,7 @@ namespace Axis.Proteus.IoC
         public virtual RegistrationInfo? RootRegistrationFor(Type rootServiceType)
             => _rootManifest.TryGetValue(rootServiceType, out var registration)
                 ? registration
-                : (RegistrationInfo?) null;
+                : null;
 
 
         /// <summary>

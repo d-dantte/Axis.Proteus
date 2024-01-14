@@ -1,7 +1,4 @@
-﻿using Axis.Luna.Extensions;
-using Axis.Proteus.Exceptions;
-using Axis.Proteus.Interception;
-using Axis.Proteus.IoC;
+﻿using Axis.Proteus.IoC;
 using Axis.Proteus.SimpleInjector.NamedContext;
 using Axis.Proteus.SimpleInjector.Test.Types;
 using Castle.DynamicProxy;
@@ -58,26 +55,32 @@ namespace Axis.Proteus.SimpleInjector.Test.Unit
 			var resolver = registrar
 				.Register<I1, C_I1>()
 				.Register<I2, C_I2>(
-					RegistryScope.Singleton,
+					ResolutionScope.Singleton,
 					new[] { new DummyInterceptor() },
 					IBindContext.Of( // named context
 						"myContext",
-						IBindTarget.Of(typeof(C_I2))),
+						IBindTarget.Of(typeof(C_I2)),
+                        ResolutionScope.Singleton),
 					IBindContext.Of( // named context
 						"myOtherContext",
-						IBindTarget.Of(new Func<IResolverContract, C_I2>(r => new C_I2()))),
+						IBindTarget.Of(new Func<IResolverContract, C_I2>(r => new C_I2())),
+                        ResolutionScope.Singleton),
 					IBindContext.OfParameter( // param context
 						IBindTarget.Of(typeof(C_I1_I2)),
-						param => param.Name.Equals("a")),
+						param => param.Name.Equals("a"),
+                        ResolutionScope.Singleton),
 					IBindContext.OfParameter( // param context
 						IBindTarget.Of(new Func<IResolverContract, C_I1_I2>(r => new C_I1_I2())),
-						param => param.Name.Equals("b")),
+						param => param.Name.Equals("b"),
+                        ResolutionScope.Singleton),
 					IBindContext.OfProperty( // property context
 						IBindTarget.Of(typeof(C_I1I2A)),
-						prop => prop.Name.Equals("a")),
+						prop => prop.Name.Equals("a"),
+                        ResolutionScope.Singleton),
 					IBindContext.OfProperty( // property context
 						IBindTarget.Of(new Func<IResolverContract, C_I1I2A>(r => new C_I1I2A())),
-						prop => prop.Name.Equals("b")))
+						prop => prop.Name.Equals("b"),
+                        ResolutionScope.Singleton))
 				.RegisterAll<I1>(
 					default,
 					default,

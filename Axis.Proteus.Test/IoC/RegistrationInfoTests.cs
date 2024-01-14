@@ -48,7 +48,7 @@ namespace Axis.Proteus.Test.IoC
             var serviceType = typeof(I1);
             var implType = typeof(C_I1_1);
             var target = IBindTarget.Of(implType);
-            var scope = default(RegistryScope);
+            var scope = default(ResolutionScope);
             var profile = default(InterceptorProfile);
             var namedContext = IBindContext.Of("name", target);
             var namedContext2 = IBindContext.Of("name", IBindTarget.Of(r => typeof(C_I1_1)));
@@ -123,9 +123,9 @@ namespace Axis.Proteus.Test.IoC
             var info = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Singleton);
+                ResolutionScope.Singleton);
 
-            Assert.AreEqual(RegistryScope.Singleton, info.Scope);
+            Assert.AreEqual(ResolutionScope.Singleton, info.DefaultContext.Scope);
         }
 
         [TestMethod]

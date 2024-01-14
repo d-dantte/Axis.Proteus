@@ -35,7 +35,7 @@ namespace Axis.Proteus.SimpleInjector.NamedContext
             return $"{TypeNamePrefix}_{name.Name}_{tag}_{typeId.ToString().Replace("-", "_")}";
         }
 
-        internal static Type ToNamedContextReplacementType(this
+        internal static Type ToReplacementTypeForNamedContext(this
             ResolutionContextName name,
             Type serviceType,
             Type implType)
@@ -61,7 +61,7 @@ namespace Axis.Proteus.SimpleInjector.NamedContext
             });
         }
 
-        internal static Type ToNamedContextContainerType(this
+        internal static Type ToContainerTypeForNamedContext(this
             ResolutionContextName name,
             Type serviceType,
             Type implType)

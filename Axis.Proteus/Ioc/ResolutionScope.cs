@@ -1,4 +1,5 @@
-﻿using Axis.Luna.Extensions;
+﻿using Axis.Luna.Common;
+using Axis.Luna.Extensions;
 using System;
 
 namespace Axis.Proteus.IoC
@@ -6,22 +7,22 @@ namespace Axis.Proteus.IoC
     /// <summary>
     /// Registry Scope
     /// </summary>
-    public readonly struct RegistryScope
+    public readonly struct ResolutionScope: IDefaultValueProvider<ResolutionScope>
     {
         /// <summary>
         /// Singleton scope
         /// </summary>
-        public static readonly RegistryScope Singleton = new("Singleton");
+        public static readonly ResolutionScope Singleton = new("Singleton");
 
         /// <summary>
         /// Named-scope.
         /// </summary>
-        public static readonly RegistryScope DefaultScope = new("DefaultScope");
+        public static readonly ResolutionScope DefaultScope = new("DefaultScope");
 
         /// <summary>
         /// Transient scope
         /// </summary>
-        public static readonly RegistryScope Transient = default;
+        public static readonly ResolutionScope Transient = default;
 
         private readonly string _name;
 
@@ -30,12 +31,16 @@ namespace Axis.Proteus.IoC
         /// </summary>
         public string Name => _name ?? "Transient";
 
+        public bool IsDefault => _name is null;
+
+        public static ResolutionScope Default => default;
+
 
         /// <summary>
         /// Create a new instance of this struct
         /// </summary>
         /// <param name="name">the name of the scope</param>
-        public RegistryScope(string name)
+        public ResolutionScope(string name)
         {
             _name = name.ThrowIf(
                 string.IsNullOrWhiteSpace,
@@ -46,20 +51,20 @@ namespace Axis.Proteus.IoC
         public override int GetHashCode() => Name.GetHashCode();
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            return obj is RegistryScope other
+            return obj is ResolutionScope other
                 && Name.Equals(other.Name, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <inheritdoc/>
         public override string ToString() => $"Scope: {Name.ToLowerInvariant()}";
 
-        public static implicit operator string(RegistryScope scope) => scope.Name;
+        public static implicit operator string(ResolutionScope scope) => scope.Name;
 
-        public static implicit operator RegistryScope(string scope) => new(scope);
+        public static implicit operator ResolutionScope(string scope) => new(scope);
 
-        public static bool operator ==(RegistryScope first, RegistryScope second) => first.Equals(second);
-        public static bool operator !=(RegistryScope first, RegistryScope second) => !first.Equals(second);
+        public static bool operator ==(ResolutionScope first, ResolutionScope second) => first.Equals(second);
+        public static bool operator !=(ResolutionScope first, ResolutionScope second) => !first.Equals(second);
     }
 }

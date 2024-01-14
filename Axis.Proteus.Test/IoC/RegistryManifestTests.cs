@@ -20,7 +20,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var manifest2 = manifest.AddRootRegistration(registration);
@@ -41,7 +41,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
             Assert.ThrowsException<DuplicateRegistrationException>(() =>
                 manifest
@@ -57,7 +57,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             Assert.IsFalse(manifest.HasRootRegistration(typeof(I1)));
@@ -74,7 +74,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var result = manifest.RootRegistrationFor(typeof(I1));
@@ -96,7 +96,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
             _ = manifest.AddRootRegistration(registration);
             services = manifest.RootServices();
@@ -105,7 +105,7 @@ namespace Axis.Proteus.Test.IoC
 
             registration = new RegistrationInfo(
                 typeof(Class1),
-                RegistryScope.Singleton,
+                ResolutionScope.Singleton,
                 default);
             _ = manifest.AddRootRegistration(registration);
             var services2 = manifest.RootServices();
@@ -127,18 +127,18 @@ namespace Axis.Proteus.Test.IoC
             var registration1 = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var registration2 = new RegistrationInfo(
                 typeof(Class1),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var registration3 = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_2)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var manifest2 = manifest.AddCollectionRegistrations(registration1, registration2, registration3);
@@ -158,12 +158,12 @@ namespace Axis.Proteus.Test.IoC
             var registration1 = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var registration2 = new RegistrationInfo(
                 typeof(Class1),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             Assert.ThrowsException<ArgumentException>(() => manifest.AddCollectionRegistrations(default(RegistrationInfo)));
@@ -178,7 +178,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             Assert.IsFalse(manifest.HasCollectionRegistrations(typeof(I1)));
@@ -195,7 +195,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
 
             var result = manifest.CollectionRegistrationsFor(typeof(I1));
@@ -219,7 +219,7 @@ namespace Axis.Proteus.Test.IoC
             var registration = new RegistrationInfo(
                 typeof(I1),
                 IBindTarget.Of(typeof(C_I1_1)),
-                RegistryScope.Transient,
+                ResolutionScope.Transient,
                 default);
             _ = manifest.AddCollectionRegistrations(registration);
             services = manifest.CollectionServices();
@@ -228,7 +228,7 @@ namespace Axis.Proteus.Test.IoC
 
             registration = new RegistrationInfo(
                 typeof(Class1),
-                RegistryScope.Singleton,
+                ResolutionScope.Singleton,
                 default);
             _ = manifest.AddCollectionRegistrations(registration);
             var services2 = manifest.CollectionServices();

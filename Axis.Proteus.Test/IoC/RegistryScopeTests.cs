@@ -10,14 +10,14 @@ namespace Axis.Proteus.Test.IoC
         [TestMethod]
         public void Constructor_WithNullName_ShouldThrowException()
         {
-            Assert.ThrowsException<ArgumentNullException>(() => new RegistryScope(null));
+            Assert.ThrowsException<ArgumentNullException>(() => new ResolutionScope(null));
         }
 
         [TestMethod]
         public void RegistryScope_WithIdenticalNames_ShouldBeEqual()
         {
-            var bleh1 = new RegistryScope("Bleh");
-            var bleh2 = new RegistryScope("Bleh");
+            var bleh1 = new ResolutionScope("Bleh");
+            var bleh2 = new ResolutionScope("Bleh");
 
             Assert.AreEqual(bleh1, bleh2);
             Assert.IsTrue(bleh1.Equals(bleh2));
@@ -28,7 +28,7 @@ namespace Axis.Proteus.Test.IoC
         public void RegistryScope_CreatedFromImplicitOperator_ShouldBeValid()
         {
             string scopeName = "MyScope";
-            RegistryScope scopeObject = scopeName;
+            ResolutionScope scopeObject = scopeName;
 
             Assert.AreEqual(scopeName, scopeObject.Name);
 
@@ -39,8 +39,8 @@ namespace Axis.Proteus.Test.IoC
         [TestMethod]
         public void RegistryScope_DefaultTests()
         {
-            RegistryScope defaultScope = default;
-            RegistryScope scope = RegistryScope.Transient;
+            ResolutionScope defaultScope = default;
+            ResolutionScope scope = ResolutionScope.Transient;
 
             Assert.AreEqual(defaultScope, scope);
             Assert.AreEqual("Transient", defaultScope.Name);

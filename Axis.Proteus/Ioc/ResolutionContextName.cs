@@ -1,10 +1,12 @@
-﻿using Axis.Luna.Extensions;
+﻿using Axis.Luna.Common;
+using Axis.Luna.Extensions;
 using System;
 using System.Text.RegularExpressions;
 
 namespace Axis.Proteus.IoC
 {
-    public readonly struct ResolutionContextName
+    public readonly struct ResolutionContextName :
+        IDefaultValueProvider<ResolutionContextName>
     {
         /// <summary>
         /// A pattern to which resolution context names must adhere
@@ -15,6 +17,10 @@ namespace Axis.Proteus.IoC
         /// The context name
         /// </summary>
         public string Name { get; }
+
+        public bool IsDefault => Name is null;
+
+        public static ResolutionContextName Default => default;
 
         public ResolutionContextName(string name)
         {
@@ -32,7 +38,7 @@ namespace Axis.Proteus.IoC
         /// </summary>
         public override string ToString() => $"::{Name}";
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is ResolutionContextName other
                 && other.Name.IsNullOrTrue(

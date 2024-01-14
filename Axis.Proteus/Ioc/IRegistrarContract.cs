@@ -26,7 +26,7 @@ namespace Axis.Proteus.IoC
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
         /// <param name="conditionalBindingContexts">optional <see cref="IBindContext"/> instances specifiying additional conditional registrations.</param>
         IRegistrarContract Register<Impl>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Impl : class;
@@ -44,7 +44,7 @@ namespace Axis.Proteus.IoC
         /// <param name="interceptorProfile">The interceptor to intercept calls to the service if needed. NOTE however that interception only works for <c>virtual</c> methods and properties.</param>
         /// <param name="conditionalBindingContexts">optional <see cref="IBindContext"/> instances specifiying additional conditional registrations.</param>
         IRegistrarContract Register<Service, Impl>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Service : class
@@ -64,7 +64,7 @@ namespace Axis.Proteus.IoC
         /// <param name="conditionalBindingContexts">optional <see cref="IBindContext"/> instances specifiying additional conditional registrations.</param>
         IRegistrarContract Register<Service>(
             Func<IResolverContract, Service> factory,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts)
             where Service : class;
@@ -83,7 +83,7 @@ namespace Axis.Proteus.IoC
         /// <param name="conditionalBindingContexts">optional <see cref="IBindContext"/> instances specifiying additional conditional registrations.</param>
         IRegistrarContract Register(
             Type serviceType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts);
 
@@ -103,7 +103,7 @@ namespace Axis.Proteus.IoC
         IRegistrarContract Register(
             Type serviceType,
             Type concreteType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts);
 
@@ -123,7 +123,7 @@ namespace Axis.Proteus.IoC
         IRegistrarContract Register(
             Type serviceType,
             Func<IResolverContract, object> factory,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindContext[] conditionalBindingContexts);
 
@@ -142,7 +142,7 @@ namespace Axis.Proteus.IoC
         /// <returns></returns>
         IRegistrarContract RegisterAll(
             Type serviceType,
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindTarget[] targets);
 
@@ -160,7 +160,7 @@ namespace Axis.Proteus.IoC
         /// <param name="targets">The binding targets for each individual resolution</param>
         /// <returns></returns>
         IRegistrarContract RegisterAll<Service>(
-            RegistryScope scope = default,
+            ResolutionScope scope = default,
             InterceptorProfile profile = default,
             params IBindTarget[] targets);
 
